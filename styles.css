@@ -286,6 +286,11 @@ a:hover {
   background: #dff8f5;
 }
 
+.tag-demon-royalty {
+  color: #6f2dbd;
+  background: #f0e5ff;
+}
+
 .tag-lock {
   color: var(--lock);
   background: #fff6c8;

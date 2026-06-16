@@ -487,7 +487,9 @@
   }
 
   function renderRole(role, type) {
-    const className = role.includes("อาเซราห์")
+    const className = role.includes("ราชันย์ปีศาจ") || role.includes("ราชินีปีศาจ")
+      ? "tag-demon-royalty"
+      : role.includes("อาเซราห์")
       ? "tag-aserah"
       : type === "npc" || role === "NPC" ? "tag-npc" : "tag-staff";
     return `<span class="tag ${className}">${escapeHtml(role)}</span>`;
