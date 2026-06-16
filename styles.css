@@ -281,6 +281,11 @@ a:hover {
   background: #e8ebff;
 }
 
+.tag-aserah {
+  color: #007f7a;
+  background: #dff8f5;
+}
+
 .tag-lock {
   color: var(--lock);
   background: #fff6c8;

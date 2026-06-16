@@ -246,24 +246,30 @@
 
   function buildNpcEntries(rows) {
     return rows
-      .map((row) => ({
-        id: `npc-${row.UserID}`,
-        type: "npc",
-        mainName: row["Display Name"],
-        race: row.Race,
-        role: "NPC",
-        url: row.Link,
-        faceclaim: row.Faceclaim,
-        activeSlot: "MAIN",
-        characters: [],
-        mainUsage: "",
-        searchText: normalizeSearch([
-          row["Display Name"],
-          row.Faceclaim,
-          row.Race,
-          "NPC"
-        ].join(" "))
-      }))
+      .map((row) => {
+        const linkOrRole = row.Link;
+        const role = isUrl(linkOrRole) || !linkOrRole ? "NPC" : linkOrRole;
+        const url = isUrl(linkOrRole) ? linkOrRole : "";
+
+        return {
+          id: `npc-${row.UserID}`,
+          type: "npc",
+          mainName: row["Display Name"],
+          race: row.Race,
+          role,
+          url,
+          faceclaim: row.Faceclaim,
+          activeSlot: "MAIN",
+          characters: [],
+          mainUsage: "",
+          searchText: normalizeSearch([
+            row["Display Name"],
+            row.Faceclaim,
+            row.Race,
+            role
+          ].join(" "))
+        };
+      })
       .filter((entry) => entry.mainName);
   }
 
@@ -481,7 +487,9 @@
   }
 
   function renderRole(role, type) {
-    const className = type === "npc" || role === "NPC" ? "tag-npc" : "tag-staff";
+    const className = role.includes("อาเซราห์")
+      ? "tag-aserah"
+      : type === "npc" || role === "NPC" ? "tag-npc" : "tag-staff";
     return `<span class="tag ${className}">${escapeHtml(role)}</span>`;
   }
 
@@ -614,6 +622,10 @@
   function parseBool(value) {
     const text = clean(value).toUpperCase();
     return text === "TRUE" || text === "YES" || text === "1" || text === "ใช่";
+  }
+
+  function isUrl(value) {
+    return /^https?:\/\//i.test(clean(value));
   }
 
   function parseThaiDate(value) {
