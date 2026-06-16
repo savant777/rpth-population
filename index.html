@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ทะเบียนตัวละคร RPTH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="shortcut icon" href="/favicon-32x32.png" type="image/x-icon">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="masthead">
+        <div class="rp-logo" aria-hidden="true"></div>
+        <div>
+          <h1 class="topic">ทะเบียนตัวละคร</h1>
+          <p class="masthead-note">ค้นหาชื่อตัวละคร เฟซเคลม และเผ่าพันธุ์จากทะเบียนปัจจุบัน</p>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="เครื่องมือค้นหาทะเบียน">
+        <div class="toolbar-main">
+          <label class="search-box">
+            <span>ค้นหา</span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="ชื่อตัวละคร / เฟซเคลม / เผ่าพันธุ์">
+          </label>
+          <label class="select-box">
+            <span>ประเภท</span>
+            <select id="typeFilter">
+              <option value="all">ทั้งหมด</option>
+              <option value="player">ผู้เล่น</option>
+              <option value="npc">NPC</option>
+              <option value="staff">Staff</option>
+            </select>
+          </label>
+        </div>
+        <div id="letterFilter" class="letter-filter" aria-label="กรองตามตัวอักษรแรก"></div>
+        <div class="toolbar-foot">
+          <span id="resultCount">กำลังโหลดข้อมูล...</span>
+          <span id="lastUpdated"></span>
+        </div>
+      </section>
+
+      <article class="paper">
+        <div id="registry" class="registry" aria-live="polite"></div>
+      </article>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
