@@ -25,6 +25,7 @@
   };
 
   init();
+  window.addEventListener("load", postHeight);
 
   async function init() {
     bindEvents();
@@ -69,6 +70,7 @@
 
     window.addEventListener("resize", () => {
       requestAnimationFrame(positionTooltips);
+      requestAnimationFrame(postHeight);
     });
   }
 
@@ -393,6 +395,7 @@
     `).join("");
 
     requestAnimationFrame(positionTooltips);
+    requestAnimationFrame(postHeight);
   }
 
   function getFilteredEntries() {
@@ -560,6 +563,15 @@
         tooltip.style.setProperty("--tooltip-x", `${-rightOverflow - 8}px`);
       }
     });
+  }
+
+  function postHeight() {
+    if (window.parent === window) return;
+
+    window.parent.postMessage({
+      type: "rpth-population-height",
+      height: document.documentElement.scrollHeight
+    }, "*");
   }
 
   function renderLetterFilter(letters) {
