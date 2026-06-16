@@ -430,7 +430,7 @@
       race: entry.race,
       role: entry.role,
       url: entry.url,
-      isActive: entry.type === "player" && entry.activeSlot === "MAIN" && hasSubCharacters,
+      isActive: Boolean(main && main.isActive && hasSubCharacters),
       usage: entry.type === "player" && hasSubCharacters ? entry.mainUsage : "",
       type: entry.type,
       isLocked: mainLocked,
