@@ -172,7 +172,7 @@ a:hover {
     flex: 0 0 auto;
     width: 100px;
     height: 100px;
-    background: url(/rpth-logo.png) center / 70% no-repeat;
+    background: url(./rpth-logo.png) center / 70% no-repeat;
     margin: 0;
 }
 
