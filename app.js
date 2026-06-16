@@ -1,9 +1,10 @@
 (function () {
   const DATA_SOURCES = {
-    players: "[RPTH] ทะเบียนตัวละคร - Player.csv",
-    staff: "[RPTH] ทะเบียนตัวละคร - Staff.csv",
-    npc: "[RPTH] ทะเบียนตัวละคร - NPC.csv",
-    locks: "[RPTH] ทะเบียนตัวละคร - log เฟซเคลมล็อก.csv"
+    players: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=800603736&single=true&output=csv",
+    staff: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=2044057244&single=true&output=csv",
+    npc: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=1129713776&single=true&output=csv",
+    locks: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=565505546&single=true&output=csv",
+    characterUrls: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=922230904&single=true&output=csv"
   };
 
   const THAI_COLLATOR = new Intl.Collator("th", { sensitivity: "base", numeric: true });
@@ -30,17 +31,19 @@
     renderLetterFilter([]);
 
     try {
-      const [players, staff, npc, locks] = await Promise.all([
+      const [players, staff, npc, locks, characters] = await Promise.all([
         loadCsv(DATA_SOURCES.players),
         loadCsv(DATA_SOURCES.staff),
         loadCsv(DATA_SOURCES.npc),
-        loadCsv(DATA_SOURCES.locks)
+        loadCsv(DATA_SOURCES.locks),
+        loadCsv(DATA_SOURCES.characterUrls)
       ]);
 
       const activeLocks = buildActiveLocks(locks);
+      const charactersByUser = buildCharactersByUser(characters);
       state.entries = [
-        ...buildPlayerEntries(players, activeLocks),
-        ...buildStaffEntries(staff),
+        ...buildPlayerEntries(players, activeLocks, charactersByUser),
+        ...buildStaffEntries(staff, charactersByUser),
         ...buildNpcEntries(npc)
       ].sort((a, b) => THAI_COLLATOR.compare(a.mainName, b.mainName));
 
@@ -131,22 +134,23 @@
     return clean(header).replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ");
   }
 
-  function buildPlayerEntries(rows, activeLocks) {
+  function buildPlayerEntries(rows, activeLocks, charactersByUser) {
     return rows
-      .filter((row) => row.Status === "TRUE")
+      .filter((row) => parseBool(row.Status))
       .map((row) => {
         const activeSlot = normalizeSlot(row["Active Character"]);
-        const characters = collectPlayerCharacters(row, activeSlot, activeLocks);
+        const characters = collectPlayerCharacters(row, activeSlot, activeLocks, charactersByUser);
         const mainCharacter = characters.find((character) => character.slot === "MAIN");
+        const activeCharacter = characters.find((character) => character.isActive);
 
         return {
           id: `player-${row.UserID}`,
           type: "player",
-          mainName: row["Main Character"],
+          mainName: mainCharacter ? mainCharacter.name : row["Display Name"],
           race: row.Race,
           role: "",
           url: mainCharacter ? mainCharacter.url : row.Url,
-          faceclaim: activeSlot === "MAIN" ? row["Face Claim"] || row["Main Faceclaim"] : "",
+          faceclaim: activeCharacter ? activeCharacter.faceclaim : row["Face Claim"],
           activeSlot,
           characters,
           mainUsage: getMainUsage(row),
@@ -156,11 +160,73 @@
       .filter((entry) => entry.mainName);
   }
 
-  function collectPlayerCharacters(row, activeSlot, activeLocks) {
-    const characters = [];
-    const url = row.Url;
+  function collectPlayerCharacters(row, activeSlot, activeLocks, charactersByUser) {
+    const sourceCharacters = getCharactersForUser(charactersByUser, row.UserID);
+    const characters = sourceCharacters.length ? sourceCharacters : collectLegacyCharacters(row);
+
+    return characters.map((character) => {
+      const isActive = character.isActive || character.slot === activeSlot;
+      const lock = activeLocks.get(lockKey(row.UserID, character.name));
+      return {
+        ...character,
+        url: character.url || row.Url || "",
+        isActive,
+        lockedFaceclaim: lock && !isActive ? lock.faceclaim : "",
+        lockEndDate: lock ? lock.endDate : ""
+      };
+    });
+  }
+
+  function buildStaffEntries(rows, charactersByUser) {
+    return rows
+      .map((row) => {
+        const activeSlot = normalizeSlot(row["Active Character"]);
+        const characters = collectStaffCharacters(row, activeSlot, charactersByUser);
+        const mainCharacter = characters.find((character) => character.slot === "MAIN");
+        const activeCharacter = characters.find((character) => character.isActive);
+
+        return {
+          id: `staff-${row.UserID}`,
+          type: "staff",
+          mainName: mainCharacter ? mainCharacter.name : row["Display Name"],
+          race: row.Race,
+          role: row.Role,
+          url: mainCharacter ? mainCharacter.url : row.Url,
+          faceclaim: activeCharacter ? activeCharacter.faceclaim : row.Faceclaim,
+          activeSlot,
+          characters,
+          mainUsage: "",
+          searchText: normalizeSearch([
+            row["Display Name"],
+            row.Faceclaim,
+            row.Race,
+            row.Role,
+            ...characters.flatMap((character) => [
+              character.name,
+              character.faceclaim
+            ])
+          ].join(" "))
+        };
+      })
+      .filter((entry) => entry.mainName);
+  }
+
+  function collectStaffCharacters(row, activeSlot, charactersByUser) {
+    const sourceCharacters = getCharactersForUser(charactersByUser, row.UserID);
+    const characters = sourceCharacters.length ? sourceCharacters : collectLegacyCharacters(row);
+
+    return characters.map((character) => ({
+      ...character,
+      url: character.url || row.Url || "",
+      isActive: character.isActive || character.slot === activeSlot,
+      lockedFaceclaim: "",
+      lockEndDate: ""
+    }));
+  }
+
+  function collectLegacyCharacters(row) {
     const slots = [
-      { slot: "MAIN", name: row["Main Character"], faceclaim: row["Main Faceclaim"] || row["Face Claim"] },
+      { slot: "MAIN", name: row["Main Character"] || row["Display Name"], faceclaim: row["Main Faceclaim"] || row.Faceclaim },
       { slot: "SUB 1", name: row["Sub1 Character"], faceclaim: row["Sub1 Faceclaim"] },
       { slot: "SUB 2", name: row["Sub2 Character"], faceclaim: row["Sub2 Faceclaim"] },
       { slot: "SUB 3", name: row["Sub3 Character"], faceclaim: row["Sub3 Faceclaim"] },
@@ -169,49 +235,13 @@
       { slot: "SUB 6", name: row["Sub6 Character"], faceclaim: row["Sub6 Faceclaim"] }
     ];
 
-    slots.forEach((character) => {
-      if (!character.name) return;
-      const isActive = character.slot === activeSlot;
-      const lock = activeLocks.get(lockKey(row.UserID, character.name));
-      characters.push({
+    return slots
+      .filter((character) => character.name)
+      .map((character) => ({
         ...character,
-        url,
-        isActive,
-        lockedFaceclaim: lock && !isActive ? lock.faceclaim : "",
-        lockEndDate: lock ? lock.endDate : ""
-      });
-    });
-
-    return characters;
-  }
-
-  function buildStaffEntries(rows) {
-    return rows
-      .map((row) => ({
-        id: `staff-${row.UserID}`,
-        type: "staff",
-        mainName: row["Main Character"] || row["Display Name"],
-        race: row.Race,
-        role: row.Role,
-        url: row.Url,
-        faceclaim: row.Faceclaim || row["Main Faceclaim"],
-        activeSlot: normalizeSlot(row["Active Character"]),
-        characters: [],
-        mainUsage: "",
-        searchText: normalizeSearch([
-          row["Display Name"],
-          row.Faceclaim,
-          row["Main Character"],
-          row["Main Faceclaim"],
-          row["Sub1 Character"],
-          row["Sub1 Faceclaim"],
-          row["Sub2 Character"],
-          row["Sub2 Faceclaim"],
-          row.Race,
-          row.Role
-        ].join(" "))
-      }))
-      .filter((entry) => entry.mainName);
+        url: row.Url || "",
+        isActive: false
+      }));
   }
 
   function buildNpcEntries(rows) {
@@ -235,6 +265,45 @@
         ].join(" "))
       }))
       .filter((entry) => entry.mainName);
+  }
+
+  function buildCharactersByUser(rows) {
+    const charactersByUser = new Map();
+
+    rows.forEach((row) => {
+      const userId = row.UserID;
+      const characterName = row["Character Name"];
+      if (!userId || !characterName) return;
+
+      const character = {
+        slot: normalizeSlot(row["Character Slot"]),
+        name: characterName,
+        faceclaim: row["Character Faceclaim"],
+        url: row["Character Url"],
+        isActive: parseBool(row["Is Active Character"])
+      };
+
+      if (!charactersByUser.has(userId)) {
+        charactersByUser.set(userId, []);
+      }
+      charactersByUser.get(userId).push(character);
+    });
+
+    charactersByUser.forEach((characters) => {
+      characters.sort((a, b) => slotRank(a.slot) - slotRank(b.slot));
+    });
+
+    return charactersByUser;
+  }
+
+  function getCharactersForUser(charactersByUser, userId) {
+    return charactersByUser.get(userId) || [];
+  }
+
+  function slotRank(slot) {
+    if (slot === "MAIN") return 0;
+    const match = slot.match(/^SUB\s+(\d+)$/);
+    return match ? Number(match[1]) : 99;
   }
 
   function buildActiveLocks(rows) {
@@ -367,8 +436,8 @@
   }
 
   function getMainFaceclaim(entry, main) {
-    if (entry.type !== "player") return entry.faceclaim;
-    if (entry.activeSlot === "MAIN") return entry.faceclaim;
+    if (entry.type === "npc") return entry.faceclaim;
+    if (main && main.isActive) return main.faceclaim;
     return main && main.lockedFaceclaim ? main.lockedFaceclaim : "";
   }
 
@@ -540,6 +609,11 @@
   function toNumber(value) {
     const parsed = Number(String(value || "").replace(/,/g, ""));
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function parseBool(value) {
+    const text = clean(value).toUpperCase();
+    return text === "TRUE" || text === "YES" || text === "1" || text === "ใช่";
   }
 
   function parseThaiDate(value) {

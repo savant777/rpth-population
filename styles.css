@@ -284,6 +284,7 @@ a:hover {
 .tag-lock {
   color: var(--lock);
   background: #fff6c8;
+  margin-left: 6px;
 }
 
 .tag-lock::before {
@@ -699,7 +700,7 @@ a:hover {
   .icon-action {
     width: 20px;
     height: 20px;
-    margin-right: 3px;
+    margin-right: 0;
   }
 
   .usage-button::before {
