@@ -26,6 +26,16 @@ body {
   font-family: "Sarabun", sans-serif;
 }
 
+html.is-embedded,
+html.is-embedded body {
+  scrollbar-width: none;
+}
+
+html.is-embedded::-webkit-scrollbar,
+html.is-embedded body::-webkit-scrollbar {
+  display: none;
+}
+
 a {
   color: var(--link);
   font-weight: 700;

@@ -29,6 +29,7 @@
   window.addEventListener("load", postHeight);
 
   async function init() {
+    document.documentElement.classList.toggle("is-embedded", window.parent !== window);
     bindEvents();
     renderLetterFilter([]);
 
