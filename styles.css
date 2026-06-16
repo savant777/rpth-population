@@ -29,6 +29,7 @@ body {
 html.is-embedded,
 html.is-embedded body {
   scrollbar-width: none;
+  overflow: visible;
 }
 
 html.is-embedded::-webkit-scrollbar,
