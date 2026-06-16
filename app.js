@@ -12,7 +12,8 @@
     entries: [],
     query: "",
     letter: "all",
-    type: "all"
+    type: "all",
+    postedHeight: 0
   };
 
   const els = {
@@ -567,10 +568,23 @@
 
   function postHeight() {
     if (window.parent === window) return;
+    const shell = document.querySelector(".page-shell");
+    if (!shell) return;
+
+    const shellRect = shell.getBoundingClientRect();
+    const shellStyle = getComputedStyle(shell);
+    const height = Math.ceil(
+      shellRect.height +
+      parseFloat(shellStyle.marginTop || 0) +
+      parseFloat(shellStyle.marginBottom || 0)
+    );
+
+    if (Math.abs(height - state.postedHeight) < 2) return;
+    state.postedHeight = height;
 
     window.parent.postMessage({
       type: "rpth-population-height",
-      height: document.documentElement.scrollHeight
+      height
     }, "*");
   }
 
