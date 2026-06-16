@@ -16,7 +16,7 @@
         <div class="rp-logo" aria-hidden="true"></div>
         <div>
           <h1 class="topic">ทะเบียนตัวละคร</h1>
-          <p class="masthead-note">ค้นหาชื่อตัวละคร เฟซเคลม และเผ่าพันธุ์จากทะเบียนปัจจุบัน</p>
+          <p class="masthead-note">รายนามตัวละครและเฟซเคลมในปัจจุบัน</p>
         </div>
       </header>
 
@@ -24,7 +24,7 @@
         <div class="toolbar-main">
           <label class="search-box">
             <span>ค้นหา</span>
-            <input id="searchInput" type="search" autocomplete="off" placeholder="ชื่อตัวละคร / เฟซเคลม / เผ่าพันธุ์">
+            <input id="searchInput" type="search" autocomplete="off" placeholder="พิมพ์ชื่อตัวละคร ชื่อเฟซเคลม หรือเผ่าพันธุ์ที่ต้องการค้นหา">
           </label>
           <label class="select-box">
             <span>ประเภท</span>
@@ -35,8 +35,12 @@
               <option value="staff">Staff</option>
             </select>
           </label>
+          <button id="refreshButton" class="refresh-button" type="button">รีเฟรช</button>
         </div>
         <div id="letterFilter" class="letter-filter" aria-label="กรองตามตัวอักษรแรก"></div>
+        <p class="toolbar-note">แตะหรือชี้ไอคอนนาฬิกา <span class="icon-action usage-button" type="button"></span> เพื่อดูระยะเวลาใช้งานตัวละครหลักในปีปัจจุบัน</p>
+        <p class="toolbar-note">ในหน้าจอขนาดเล็ก ปุ่ม <span class="profile-link" title="ลิงก์ประวัติตัวละคร" aria-label="ลิงก์ประวัติตัวละคร"></span> จะพาไปยังหน้าประวัติตัวละคร</p>
+        <p class="toolbar-note">ในหน้าจอขนาดเล็ก จุดสีเขียว <span class="tag tag-active" title="กำลังใช้งานอยู่" aria-label="กำลังใช้งานอยู่"></span> แสดงถึงตัวละครที่กำลังใช้งานอยู่</p>
         <div class="toolbar-foot">
           <span id="resultCount">กำลังโหลดข้อมูล...</span>
           <span id="lastUpdated"></span>

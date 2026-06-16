@@ -22,6 +22,7 @@
     lastUpdated: document.getElementById("lastUpdated"),
     searchInput: document.getElementById("searchInput"),
     typeFilter: document.getElementById("typeFilter"),
+    refreshButton: document.getElementById("refreshButton"),
     letterFilter: document.getElementById("letterFilter")
   };
 
@@ -32,8 +33,12 @@
     document.documentElement.classList.toggle("is-embedded", window.parent !== window);
     bindEvents();
     renderLetterFilter([]);
+    await refreshData();
+  }
 
+  async function refreshData() {
     try {
+      setLoading(true);
       const [players, staff, npc, locks, characters] = await Promise.all([
         loadCsv(DATA_SOURCES.players),
         loadCsv(DATA_SOURCES.staff),
@@ -56,6 +61,8 @@
       console.error(error);
       els.registry.innerHTML = '<p class="error-state">โหลดข้อมูลไม่สำเร็จ กรุณาเปิดผ่าน local server หรือใส่ URL CSV export ของ Google Sheet</p>';
       els.resultCount.textContent = "โหลดข้อมูลไม่สำเร็จ";
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -70,10 +77,20 @@
       render();
     });
 
+    els.refreshButton.addEventListener("click", refreshData);
+
     window.addEventListener("resize", () => {
       requestAnimationFrame(positionTooltips);
       requestAnimationFrame(postHeight);
     });
+  }
+
+  function setLoading(isLoading) {
+    els.refreshButton.disabled = isLoading;
+    els.refreshButton.textContent = isLoading ? "กำลังโหลด..." : "รีเฟรช";
+    if (isLoading) {
+      els.resultCount.textContent = "กำลังโหลดข้อมูล...";
+    }
   }
 
   async function loadCsv(path) {
@@ -158,7 +175,8 @@
           activeSlot,
           characters,
           mainUsage: getMainUsage(row),
-          searchText: buildSearchText(row, characters)
+          searchText: buildSearchText(row, characters),
+          raceSearchText: normalizeSearch(row.Race)
         };
       })
       .filter((entry) => entry.mainName);
@@ -200,10 +218,10 @@
           activeSlot,
           characters,
           mainUsage: "",
+          raceSearchText: normalizeSearch(row.Race),
           searchText: normalizeSearch([
             row["Display Name"],
             row.Faceclaim,
-            row.Race,
             row.Role,
             ...characters.flatMap((character) => [
               character.name,
@@ -259,20 +277,20 @@
           id: `npc-${row.UserID}`,
           type: "npc",
           mainName: row["Display Name"],
-          race: row.Race,
+        race: row.Race,
           role,
           url,
           faceclaim: row.Faceclaim,
           activeSlot: "MAIN",
           characters: [],
           mainUsage: "",
-          searchText: normalizeSearch([
-            row["Display Name"],
-            row.Faceclaim,
-            row.Race,
-            role
-          ].join(" "))
-        };
+        searchText: normalizeSearch([
+          row["Display Name"],
+          row.Faceclaim,
+          role
+        ].join(" ")),
+        raceSearchText: normalizeSearch(row.Race)
+      };
       })
       .filter((entry) => entry.mainName);
   }
@@ -404,9 +422,15 @@
     return state.entries.filter((entry) => {
       const matchType = state.type === "all" || entry.type === state.type;
       const matchLetter = state.letter === "all" || firstLetter(entry.mainName) === state.letter;
-      const matchQuery = !state.query || entry.searchText.includes(state.query);
+      const matchQuery = !state.query || entry.searchText.includes(state.query) || matchRaceQuery(entry.raceSearchText, state.query);
       return matchType && matchLetter && matchQuery;
     });
+  }
+
+  function matchRaceQuery(raceSearchText, query) {
+    if (!query) return true;
+    if (query === "มนุษย์") return raceSearchText === "มนุษย์";
+    return raceSearchText.includes(query);
   }
 
   function groupByLetter(entries) {
@@ -621,7 +645,6 @@
       row["Face Claim"],
       row["Main Character"],
       row["Main Faceclaim"],
-      row.Race,
       row.Url,
       ...characters.flatMap((character) => [
         character.name,
