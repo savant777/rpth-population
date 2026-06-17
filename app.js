@@ -270,27 +270,30 @@
     return rows
       .map((row) => {
         const linkOrRole = row.Link;
-        const role = isUrl(linkOrRole) || !linkOrRole ? "NPC" : linkOrRole;
+        const role = "NPC";
+        const extraRoles = isUrl(linkOrRole) || !linkOrRole ? [] : [linkOrRole];
         const url = isUrl(linkOrRole) ? linkOrRole : "";
 
         return {
           id: `npc-${row.UserID}`,
           type: "npc",
           mainName: row["Display Name"],
-        race: row.Race,
+          race: row.Race,
           role,
+          extraRoles,
           url,
           faceclaim: row.Faceclaim,
           activeSlot: "MAIN",
           characters: [],
           mainUsage: "",
-        searchText: normalizeSearch([
-          row["Display Name"],
-          row.Faceclaim,
-          role
-        ].join(" ")),
-        raceSearchText: normalizeSearch(row.Race)
-      };
+          searchText: normalizeSearch([
+            row["Display Name"],
+            row.Faceclaim,
+            role,
+            ...extraRoles
+          ].join(" ")),
+          raceSearchText: normalizeSearch(row.Race)
+        };
       })
       .filter((entry) => entry.mainName);
   }
@@ -453,6 +456,7 @@
       faceclaim: getMainFaceclaim(entry, main),
       race: entry.race,
       role: entry.role,
+      extraRoles: entry.extraRoles,
       url: entry.url,
       isActive: Boolean(main && main.isActive && hasSubCharacters),
       usage: entry.type === "player" && hasSubCharacters ? entry.mainUsage : "",
@@ -507,6 +511,11 @@
 
     if (data.race) parts.push(renderRace(data.race));
     if (data.role && data.role !== "ล็อกเฟซเคลม") parts.push(`<span class="segment">${renderRole(data.role, data.type)}</span>`);
+    if (data.extraRoles && data.extraRoles.length) {
+      data.extraRoles.forEach((role) => {
+        parts.push(`<span class="segment">${renderRole(role, data.type)}</span>`);
+      });
+    }
     if (data.url) {
       parts.push(`<span class="segment segment-action segment-profile"><a class="profile-link" href="${escapeAttribute(data.url)}" target="_blank" rel="noopener" title="ลิงก์ประวัติตัวละคร" aria-label="ลิงก์ประวัติตัวละคร"><span class="profile-link-text">ลิงก์ประวัติตัวละคร</span></a></span>`);
     }
