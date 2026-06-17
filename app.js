@@ -4,7 +4,7 @@
     staff: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=2044057244&single=true&output=csv",
     npc: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=1129713776&single=true&output=csv",
     locks: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=565505546&single=true&output=csv",
-    characterUrls: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=922230904&single=true&output=csv"
+    characters: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgQtSwWr5mlkgzywn-MBDJwVT5W0PCubFFxkt79Uo62KrXkCzSnNHBinKoCfLTKgWvHWc_ebz_rwDD/pub?gid=922230904&single=true&output=csv"
   };
 
   const THAI_COLLATOR = new Intl.Collator("th", { sensitivity: "base", numeric: true });
@@ -44,7 +44,7 @@
         loadCsv(DATA_SOURCES.staff),
         loadCsv(DATA_SOURCES.npc),
         loadCsv(DATA_SOURCES.locks),
-        loadCsv(DATA_SOURCES.characterUrls)
+        loadCsv(DATA_SOURCES.characters)
       ]);
 
       const activeLocks = buildActiveLocks(locks);
@@ -171,7 +171,7 @@
           race: row.Race,
           role: "",
           url: mainCharacter ? mainCharacter.url : row.Url,
-          faceclaim: activeCharacter ? activeCharacter.faceclaim : row["Face Claim"],
+          faceclaim: activeCharacter ? activeCharacter.faceclaim : "",
           activeSlot,
           characters,
           mainUsage: getMainUsage(row),
@@ -183,8 +183,7 @@
   }
 
   function collectPlayerCharacters(row, activeSlot, activeLocks, charactersByUser) {
-    const sourceCharacters = getCharactersForUser(charactersByUser, row.UserID);
-    const characters = sourceCharacters.length ? sourceCharacters : collectLegacyCharacters(row);
+    const characters = getCharactersForUser(charactersByUser, row.UserID);
 
     return characters.map((character) => {
       const isActive = character.isActive || character.slot === activeSlot;
@@ -214,14 +213,13 @@
           race: row.Race,
           role: row.Role,
           url: mainCharacter ? mainCharacter.url : row.Url,
-          faceclaim: activeCharacter ? activeCharacter.faceclaim : row.Faceclaim,
+          faceclaim: activeCharacter ? activeCharacter.faceclaim : "",
           activeSlot,
           characters,
           mainUsage: "",
           raceSearchText: normalizeSearch(row.Race),
           searchText: normalizeSearch([
             row["Display Name"],
-            row.Faceclaim,
             row.Role,
             ...characters.flatMap((character) => [
               character.name,
@@ -234,8 +232,7 @@
   }
 
   function collectStaffCharacters(row, activeSlot, charactersByUser) {
-    const sourceCharacters = getCharactersForUser(charactersByUser, row.UserID);
-    const characters = sourceCharacters.length ? sourceCharacters : collectLegacyCharacters(row);
+    const characters = getCharactersForUser(charactersByUser, row.UserID);
 
     return characters.map((character) => ({
       ...character,
@@ -244,26 +241,6 @@
       lockedFaceclaim: "",
       lockEndDate: ""
     }));
-  }
-
-  function collectLegacyCharacters(row) {
-    const slots = [
-      { slot: "MAIN", name: row["Main Character"] || row["Display Name"], faceclaim: row["Main Faceclaim"] || row.Faceclaim },
-      { slot: "SUB 1", name: row["Sub1 Character"], faceclaim: row["Sub1 Faceclaim"] },
-      { slot: "SUB 2", name: row["Sub2 Character"], faceclaim: row["Sub2 Faceclaim"] },
-      { slot: "SUB 3", name: row["Sub3 Character"], faceclaim: row["Sub3 Faceclaim"] },
-      { slot: "SUB 4", name: row["Sub4 Character"], faceclaim: row["Sub4 Faceclaim"] },
-      { slot: "SUB 5", name: row["Sub5 Character"], faceclaim: row["Sub5 Faceclaim"] },
-      { slot: "SUB 6", name: row["Sub6 Character"], faceclaim: row["Sub6 Faceclaim"] }
-    ];
-
-    return slots
-      .filter((character) => character.name)
-      .map((character) => ({
-        ...character,
-        url: row.Url || "",
-        isActive: false
-      }));
   }
 
   function buildNpcEntries(rows) {
@@ -381,11 +358,7 @@
     const endLimit = new Date(year, 11, 20);
     const end = startOfDay(today > endLimit ? endLimit : today);
     const elapsedDays = Math.max(0, diffDays(start, end));
-    const activeSlot = normalizeSlot(row["Active Character"]);
-    const accumulatedSubDays = toNumber(row["วันสะสมก่อนหน้า"]);
-    const switchDate = parseThaiDate(row["วันที่สลับ ตัวหลัก-รอง"]);
-    const currentSubDays = activeSlot === "MAIN" || !switchDate ? 0 : Math.max(0, diffDays(switchDate, end));
-    const subDays = accumulatedSubDays + currentSubDays;
+    const subDays = toNumber(row["Sub Usage Days"] || row["วันสะสมก่อนหน้า"]);
     const mainDays = Math.max(0, elapsedDays - subDays);
     return formatMonthDay(mainDays);
   }
@@ -654,10 +627,6 @@
     return normalizeSearch([
       row.UserID,
       row["Display Name"],
-      row["Face Claim"],
-      row["Main Character"],
-      row["Main Faceclaim"],
-      row.Url,
       ...characters.flatMap((character) => [
         character.name,
         character.faceclaim,
