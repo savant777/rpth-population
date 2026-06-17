@@ -465,30 +465,33 @@
     return `
       <div class="entry-card entry-${escapeAttribute(entry.type)}">
         <div class="entry-main">${mainLine}</div>
-        ${subCharacters.length ? `<ol class="sub-list">${subCharacters.map((character) => `<li>${renderSubCharacter(character)}</li>`).join("")}</ol>` : ""}
+        ${subCharacters.length ? `<ol class="sub-list">${subCharacters.map((character) => `<li>${renderSubCharacter(character, entry.type)}</li>`).join("")}</ol>` : ""}
       </div>
     `;
   }
 
   function getMainFaceclaim(entry, main) {
     if (entry.type === "npc") return entry.faceclaim;
+    if (entry.type === "staff") return main ? main.faceclaim : entry.faceclaim;
     if (main && main.isActive) return main.faceclaim;
     return main && main.lockedFaceclaim ? main.lockedFaceclaim : "";
   }
 
-  function renderSubCharacter(character) {
-    const faceclaim = character.isActive ? character.faceclaim : character.lockedFaceclaim;
+  function renderSubCharacter(character, entryType) {
+    const faceclaim = entryType === "staff"
+      ? character.faceclaim
+      : character.isActive ? character.faceclaim : character.lockedFaceclaim;
     return renderCharacterLine({
       name: character.name,
       roleLabel: "ตัวละครรอง",
       faceclaim,
       race: "",
-      role: character.lockedFaceclaim && !character.isActive ? "ล็อกเฟซเคลม" : "",
+      role: entryType !== "staff" && character.lockedFaceclaim && !character.isActive ? "ล็อกเฟซเคลม" : "",
       url: character.url,
       isActive: character.isActive,
       usage: "",
       type: "player",
-      isLocked: Boolean(character.lockedFaceclaim && !character.isActive),
+      isLocked: entryType !== "staff" && Boolean(character.lockedFaceclaim && !character.isActive),
       lockEndDate: character.lockEndDate
     });
   }
