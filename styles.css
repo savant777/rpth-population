@@ -26,6 +26,13 @@ body {
   font-family: "Sarabun", sans-serif;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 html.is-embedded,
 html.is-embedded body {
   scrollbar-width: none;
@@ -553,11 +560,103 @@ a:hover {
 }
 
 .usage-wrap:hover .tooltip,
+.usage-button:focus + .tooltip,
 .usage-button:focus-visible + .tooltip,
 .lock-wrap:hover .tooltip,
 .lock-button:focus-visible + .tooltip {
   opacity: 1;
   transform: translate(var(--tooltip-x), 0);
+}
+
+.usage-tooltip {
+  --usage-tail-right: 10px;
+  width: max-content;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  font-family: "Sarabun", sans-serif;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.usage-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: var(--usage-tail-right);
+  border: 5px solid transparent;
+  border-top-color: #171717;
+  transform: translateX(calc(-1 * var(--tooltip-x, 0px)));
+}
+
+.usage-title,
+.usage-summary {
+  display: block;
+}
+
+.usage-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 5px;
+  color: #d0d0d0;
+}
+
+.usage-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  border: 1px solid;
+  border-radius: 3px;
+  font-size: inherit;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.usage-progress {
+  border-color: #626262;
+  background: #2c2c2c;
+  color: #f0f0f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-remaining {
+  border-color: #80612b;
+  background: #3b301c;
+  color: #ffdf8a;
+}
+
+.usage-complete {
+  border-color: #3e6a4b;
+  background: #193c27;
+  color: #b4e9c2;
+}
+
+.usage-overdue {
+  border-color: #874b50;
+  background: #46272b;
+  color: #ffb9bf;
+}
+
+.usage-divider {
+  display: block;
+  height: 0;
+  margin: 8px 0 6px;
+  border-top: 1px solid #484848;
+}
+
+.usage-warning {
+  display: flex;
+  justify-content: center;
 }
 
 .sub-list {
@@ -847,6 +946,10 @@ a:hover {
 
   .tooltip {
     bottom: calc(100% + 6px);
+  }
+
+  .usage-tooltip {
+    --usage-tail-right: 5px;
   }
 
   .sub-list {

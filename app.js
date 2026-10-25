@@ -79,6 +79,11 @@
 
     els.refreshButton.addEventListener("click", refreshData);
 
+    document.fonts.ready.then(() => {
+      positionTooltips();
+      postHeight();
+    });
+
     window.addEventListener("resize", () => {
       requestAnimationFrame(positionTooltips);
       requestAnimationFrame(postHeight);
@@ -352,15 +357,11 @@
   }
 
   function getMainUsage(row) {
-    const today = new Date();
-    const year = today.getFullYear();
-    const start = new Date(year, 0, 1);
-    const endLimit = new Date(year, 11, 20);
-    const end = startOfDay(today > endLimit ? endLimit : today);
-    const elapsedDays = Math.max(0, diffDays(start, end));
-    const subDays = toNumber(row["Sub Usage Days"] || row["วันสะสมก่อนหน้า"]);
-    const mainDays = Math.max(0, elapsedDays - subDays);
-    return formatMonthDay(mainDays);
+    const value = clean(row["Main Usage Days"]);
+    if (!value) return null;
+    const days = Number(value.replace(/,/g, ""));
+    if (!Number.isFinite(days) || days < 0) return null;
+    return Math.floor(days);
   }
 
   function formatMonthDay(days) {
@@ -432,7 +433,7 @@
       extraRoles: entry.extraRoles,
       url: entry.url,
       isActive: Boolean(main && main.isActive && hasSubCharacters),
-      usage: entry.type === "player" && hasSubCharacters ? entry.mainUsage : "",
+      usage: entry.type === "player" && hasSubCharacters ? entry.mainUsage : null,
       type: entry.type,
       isLocked: mainLocked,
       lockEndDate: mainLocked ? main.lockEndDate : ""
@@ -495,7 +496,7 @@
     if (data.isActive) {
       parts.push('<span class="segment segment-action segment-active"><span class="tag tag-active" title="กำลังใช้งานอยู่" aria-label="กำลังใช้งานอยู่"><span class="tag-active-text">กำลังใช้งานอยู่</span></span></span>');
     }
-    if (data.usage) parts.push(renderUsageButton(data.usage));
+    if (typeof data.usage === "number") parts.push(renderUsageButton(data.usage));
 
     return `<div class="character-line">${parts.join("")}</div>`;
   }
@@ -545,35 +546,44 @@
     return `<span class="lock-wrap"><span class="tag tag-lock">${label}</span><span class="icon-action lock-button" tabindex="0" role="button" aria-label="${escapeAttribute(label)}"></span><span class="tooltip" role="tooltip">${label}</span></span>`;
   }
 
-  function renderUsageButton(usage) {
-    const label = `ใช้งานตัวหลักแล้ว ${usage}`;
+  function getRemainingUsageDays(today = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric"
+    }).formatToParts(today);
+    const dateParts = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    const year = Number(dateParts.year);
+    const currentDay = Date.UTC(year, Number(dateParts.month) - 1, Number(dateParts.day));
+    // The sheet already includes today; only subsequent days remain available.
+    return Math.max(0, (Date.UTC(year, 11, 20) - currentDay) / 86400000);
+  }
+
+  function renderUsageButton(usage, today = new Date()) {
+    const remaining = Math.max(0, 180 - usage);
+    const cannotComplete = remaining > getRemainingUsageDays(today);
+    const warning = "ใช้งานตัวหลักไม่ครบกำหนด";
+    const title = `ใช้งานตัวหลัก: ${formatMonthDay(usage)}`;
+    const progress = `สะสม ${usage}/180 วัน`;
+    const status = remaining ? `ขาด ${remaining} วัน` : "ครบ";
+    const statusClass = cannotComplete ? "usage-overdue" : remaining ? "usage-remaining" : "usage-complete";
+    const label = `${title} · ${progress} · ${status}${cannotComplete ? ` · ${warning}` : ""}`;
     return `
       <span class="segment usage-wrap">
         <button class="icon-action usage-button" type="button" aria-label="${escapeAttribute(label)}">
         </button>
-        <span class="tooltip" role="tooltip">${escapeHtml(label)}</span>
+        <span class="tooltip usage-tooltip" role="tooltip">
+          <span class="usage-title">${escapeHtml(title)}</span>
+          <span class="usage-summary"><span>สะสม</span><span class="usage-badge usage-progress">${usage}/180</span><span>วัน</span><span aria-hidden="true">&bull;</span><span class="usage-badge ${statusClass}">${escapeHtml(status)}</span></span>
+          ${cannotComplete ? `<span class="usage-divider" role="separator" aria-hidden="true"></span><span class="usage-warning"><span class="usage-badge usage-overdue">${escapeHtml(warning)}</span></span>` : ""}
+        </span>
       </span>
     `;
   }
 
   function positionTooltips() {
-    const paper = document.querySelector(".paper");
-    if (!paper) return;
-
-    const paperRect = paper.getBoundingClientRect();
-    document.querySelectorAll(".tooltip").forEach((tooltip) => {
-      tooltip.style.removeProperty("--tooltip-x");
-
-      const rect = tooltip.getBoundingClientRect();
-      const leftOverflow = paperRect.left - rect.left;
-      const rightOverflow = rect.right - paperRect.right;
-
-      if (leftOverflow > 0) {
-        tooltip.style.setProperty("--tooltip-x", `${leftOverflow + 8}px`);
-      } else if (rightOverflow > 0) {
-        tooltip.style.setProperty("--tooltip-x", `${-rightOverflow - 8}px`);
-      }
-    });
+    window.RpthTooltips.position(document.querySelector(".paper"));
   }
 
   function postHeight() {
