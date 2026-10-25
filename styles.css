@@ -500,8 +500,9 @@ a:hover {
 
 .icon-action::before {
   content: "";
-  width: 19px;
-  height: 19px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
   display: block;
   background-color: #303030;
 }
@@ -738,6 +739,9 @@ a:hover {
   }
 
   .paper {
+    --control-size: 20px;
+    --control-icon-size: 12px;
+    --control-gap: 6px;
     padding: 22px 12px;
     font-size: 14px;
     line-height: 1.6;
@@ -812,6 +816,16 @@ a:hover {
 
   .race-icon {
     margin-right: 0;
+    margin-bottom: 0;
+  }
+
+  .race-icon,
+  .profile-link,
+  .usage-button,
+  .lock-button,
+  .tag-active {
+    position: relative;
+    top: 2px;
   }
 
   .race-text {
@@ -831,14 +845,14 @@ a:hover {
   }
 
   .profile-link {
-    width: 20px;
-    height: 20px;
+    width: var(--control-size);
+    height: var(--control-size);
     display: inline-grid;
     place-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    margin-left: 6px;
-    margin-right: 6px;
+    margin-left: var(--control-gap);
+    margin-right: var(--control-gap);
     border-radius: 50%;
     border: 1px solid #c7c7c7;
     background: #fff;
@@ -846,8 +860,8 @@ a:hover {
 
   .profile-link::after {
     content: "";
-    width: 14px;
-    height: 14px;
+    width: var(--control-icon-size);
+    height: var(--control-icon-size);
     display: block;
     background-color: #303030;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px'%3E%3Cpath d='M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -876,10 +890,8 @@ a:hover {
 
   .lock-button {
     display: flex;
-    width: auto;
-    height: auto;
     margin-left: 4px;
-    margin-right: 6px;
+    margin-right: 0;
     border: 0;
     background: transparent;
   }
@@ -899,7 +911,7 @@ a:hover {
     color: transparent;
     position: relative;
     box-shadow: 0 0 0 3px rgba(34, 180, 85, 0.14);
-    margin-left: 3px;
+    margin-left: 0;
   }
 
   .tag-active::after {
@@ -939,23 +951,24 @@ a:hover {
 
   .segment-active {
     order: 100;
-    margin-left: 6px;
+    margin-left: 2px;
+  }
+
+  .character-line:has(.usage-wrap) .segment-active {
+    margin-left: 8px;
   }
 
   .icon-action {
-    width: 20px;
-    height: 20px;
+    width: var(--control-size);
+    height: var(--control-size);
+    flex: 0 0 auto;
     margin-right: 0;
   }
 
-  .usage-button::before {
-    width: 14px;
-    height: 14px;
-  }
-
+  .usage-button::before,
   .lock-button::before {
-    width: 1em;
-    height: 1em;
+    width: var(--control-icon-size);
+    height: var(--control-icon-size);
   }
 
   .tooltip {
