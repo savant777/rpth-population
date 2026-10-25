@@ -192,7 +192,7 @@
 
     return characters.map((character) => {
       const isActive = character.isActive || character.slot === activeSlot;
-      const lock = activeLocks.get(lockKey(row.UserID, character.name));
+      const lock = activeLocks.get(lockKey(row.UserID, character.charId));
       return {
         ...character,
         url: character.url || row.Url || "",
@@ -289,6 +289,7 @@
       if (!userId || !characterName) return;
 
       const character = {
+        charId: clean(row.CharID),
         slot: normalizeSlot(row["Character Slot"]),
         name: characterName,
         faceclaim: row["Character Faceclaim"],
@@ -320,26 +321,29 @@
   }
 
   function buildActiveLocks(rows) {
-    const today = startOfDay(new Date());
+    const dateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Bangkok", year: "numeric", month: "numeric", day: "numeric"
+    }).formatToParts(new Date());
+    const parts = Object.fromEntries(dateParts.map(({ type, value }) => [type, value]));
+    const today = new Date(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
     const locks = new Map();
 
     rows.forEach((row) => {
       const userId = row.UserID;
-      const characterName = row["Lock Character Name"];
-      const faceclaim = row["Lack Face Claim"] || row["Lock Face Claim"];
+      const charId = clean(row.CharID);
+      const faceclaim = row["Lock Face Claim"];
       const endDate = row["End Date"];
-      if (!userId || !characterName || !faceclaim || !endDate) return;
+      if (clean(row.Status) !== "กำลังนับ" || !userId || !charId || !faceclaim || !endDate) return;
 
-      const permanent = endDate.includes("ถาวร");
       const parsedEnd = parseThaiDate(endDate);
-      if (!permanent && (!parsedEnd || parsedEnd < today)) return;
+      // End Date remains protected through 23:59 in Thailand.
+      if (!parsedEnd || parsedEnd < today) return;
 
-      const key = lockKey(userId, characterName);
+      const key = lockKey(userId, charId);
       const existing = locks.get(key);
-      if (!existing || compareLockEnd(existing, { permanent, parsedEnd }) < 0) {
+      if (!existing || existing.parsedEnd < parsedEnd) {
         locks.set(key, {
           faceclaim,
-          permanent,
           endDate,
           parsedEnd
         });
@@ -347,13 +351,6 @@
     });
 
     return locks;
-  }
-
-  function compareLockEnd(a, b) {
-    if (a.permanent && !b.permanent) return 1;
-    if (!a.permanent && b.permanent) return -1;
-    if (a.permanent && b.permanent) return 0;
-    return a.parsedEnd - b.parsedEnd;
   }
 
   function getMainUsage(row) {
@@ -543,7 +540,7 @@
     const label = endDate && endDate.includes("ถาวร")
       ? "ล็อกเฟซเคลมถาวร"
       : `ล็อกเฟซเคลมถึง ${escapeHtml(endDate || "-")}`;
-    return `<span class="lock-wrap"><span class="tag tag-lock">${label}</span><span class="icon-action lock-button" tabindex="0" role="button" aria-label="${escapeAttribute(label)}"></span><span class="tooltip" role="tooltip">${label}</span></span>`;
+    return `<span class="lock-wrap"><span class="tag tag-lock">${label}</span><span class="icon-action lock-button" tabindex="0" role="button" aria-label="${escapeAttribute(label)}"></span><span class="tooltip lock-tooltip" role="tooltip">${label}</span></span>`;
   }
 
   function getRemainingUsageDays(today = new Date()) {
@@ -700,8 +697,8 @@
     return String(value).padStart(2, "0");
   }
 
-  function lockKey(userId, characterName) {
-    return `${clean(userId)}::${normalizeSearch(characterName)}`;
+  function lockKey(userId, charId) {
+    return `${clean(userId)}::${clean(charId)}`;
   }
 
   function escapeHtml(value) {

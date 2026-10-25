@@ -10,12 +10,17 @@
       // Measure the unshifted box, not an in-flight transform from a resize.
       tooltip.style.transition = "none";
       tooltip.style.removeProperty("--tooltip-x");
-      if (tooltip.classList.contains("usage-tooltip")) {
+      if (tooltip.matches(".usage-tooltip, .lock-tooltip")) {
         tooltip.style.maxWidth = `${Math.max(0, right - left)}px`;
       }
       const rect = tooltip.getBoundingClientRect();
       const targetLeft = Math.max(left, Math.min(rect.left, right - rect.width));
       tooltip.style.setProperty("--tooltip-x", `${targetLeft - rect.left}px`);
+      const button = tooltip.parentElement.querySelector(".usage-button, .lock-button");
+      if (button) {
+        const buttonRect = button.getBoundingClientRect();
+        tooltip.style.setProperty("--tooltip-tail-left", `${buttonRect.left + buttonRect.width / 2 - targetLeft}px`);
+      }
       tooltip.getBoundingClientRect();
       tooltip.style.transition = transition;
     });

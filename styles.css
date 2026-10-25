@@ -563,6 +563,7 @@ a:hover {
 .usage-button:focus + .tooltip,
 .usage-button:focus-visible + .tooltip,
 .lock-wrap:hover .tooltip,
+.lock-button:focus + .tooltip,
 .lock-button:focus-visible + .tooltip {
   opacity: 1;
   transform: translate(var(--tooltip-x), 0);
@@ -581,14 +582,23 @@ a:hover {
   text-align: center;
 }
 
-.usage-tooltip::after {
+.lock-tooltip {
+  display: none;
+  width: max-content;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.usage-tooltip::after,
+.lock-tooltip::after {
   content: "";
   position: absolute;
   top: 100%;
-  right: var(--usage-tail-right);
+  left: var(--tooltip-tail-left, calc(100% - 15px));
   border: 5px solid transparent;
   border-top-color: #171717;
-  transform: translateX(calc(-1 * var(--tooltip-x, 0px)));
+  transform: translateX(-50%);
 }
 
 .usage-title,
@@ -872,6 +882,10 @@ a:hover {
     margin-right: 6px;
     border: 0;
     background: transparent;
+  }
+
+  .lock-tooltip {
+    display: block;
   }
 
   .tag-active {
