@@ -339,7 +339,7 @@ a:hover {
 
 .character-line {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
   gap: 7px 0;
   min-width: 0;
@@ -374,7 +374,8 @@ a:hover {
 
 .tag {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
+  align-self: baseline;
   width: fit-content;
   padding: 0 6px;
   border-radius: 5px;
@@ -480,6 +481,21 @@ a:hover {
 .lock-wrap,
 .usage-wrap {
   position: relative;
+}
+
+.faceclaim-segment,
+.segment:has(.tag) {
+  align-items: baseline;
+}
+
+.lock-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  align-self: baseline;
+}
+
+.lock-wrap .tag-lock::before {
+  align-self: center;
 }
 
 .icon-action {
@@ -775,7 +791,7 @@ a:hover {
 
   .character-line {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
     gap: 6px 0;
   }
