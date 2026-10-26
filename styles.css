@@ -69,6 +69,69 @@ a:hover {
   color: #f0f0f0;
 }
 
+.protection-card .character-name {
+  color: #000;
+}
+
+.protection-role {
+  display: inline-flex;
+  align-items: baseline;
+  margin-left: 6px;
+}
+
+.protection-line {
+  align-items: baseline;
+  line-height: 1.6;
+}
+
+.protection-lock {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  align-self: baseline;
+}
+
+.protection-date-divider {
+  margin-left: 6px;
+  color: #9a9a9a;
+  font-weight: 400;
+}
+
+.toolbar-note .protection-lock {
+  align-self: center;
+}
+
+.protection-lock .tag-lock {
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.protection-lock .tag-lock::before {
+  align-self: center;
+}
+
+.protection-lock .tag-lock-paused {
+  color: #686868;
+  background: #e8e8e8;
+}
+
+.protection-lock .tag-lock-permanent {
+  color: #1976b5;
+  background: #e0f2ff;
+}
+
+.protection-lock .tag-lock-paused::before {
+  position: relative;
+  top: 1px;
+  --pause-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 -960 960 960'%3E%3Cpath d='M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z'/%3E%3C/svg%3E");
+  -webkit-mask: var(--pause-icon) center / contain no-repeat;
+  mask: var(--pause-icon) center / contain no-repeat;
+}
+
+.toolbar-note .protection-lock .tag-lock-paused::before {
+  top: 0.1px;
+}
+
 .toolbar {
   max-width: 1200px;
   margin: 0 auto 18px;

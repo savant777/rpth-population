@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ทะเบียนเฟซเคลมล็อก RPTH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="shortcut icon" href="./favicon-32x32.png" type="image/x-icon">
+  </head>
+  <body data-registry="locks">
+    <main class="page-shell">
+      <header class="masthead">
+        <div class="rp-logo" aria-hidden="true"></div>
+        <div>
+          <h1 class="topic">ทะเบียนเฟซเคลมล็อก</h1>
+          <p class="masthead-note">รายนามตัวละครที่มีการคุ้มครองเฟซเคลมและกำหนดหมดอายุ</p>
+        </div>
+      </header>
+      <section class="toolbar" aria-label="เครื่องมือค้นหาทะเบียนเฟซเคลมล็อก">
+        <div class="toolbar-main">
+          <label class="search-box">
+            <span>ค้นหา</span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="พิมพ์ชื่อตัวละครหรือชื่อเฟซเคลมที่ต้องการค้นหา">
+          </label>
+          <label class="select-box">
+            <span>ประเภท</span>
+            <select id="typeFilter">
+              <option value="all">ทั้งหมด</option>
+              <option value="player">ผู้เล่น</option>
+              <option value="npc">NPC</option>
+              <option value="staff">Staff</option>
+            </select>
+          </label>
+          <button id="refreshButton" class="refresh-button" type="button">รีเฟรช</button>
+        </div>
+        <div id="letterFilter" class="letter-filter" aria-label="กรองตามตัวอักษรแรกของชื่อตัวละครหลัก"></div>
+        <p class="toolbar-note"><span class="protection-lock"><span class="tag tag-lock" title="กำหนดหมดอายุ">06/06/2026</span></span><span>คือกำหนดหมดอายุที่ขอล็อกเฟซเคลม</span></p>
+        <p class="toolbar-note"><span class="protection-lock"><span class="tag tag-lock tag-lock-paused" title="หยุดนับชั่วคราวเมื่อ">06/06/2026</span></span><span>คือวันที่หยุดนับการล็อกเฟซเคลมชั่วคราว</span></p>
+        <div class="toolbar-foot">
+          <span id="resultCount">กำลังโหลดข้อมูล...</span>
+          <span id="lastUpdated"></span>
+        </div>
+      </section>
+      <article class="paper">
+        <div id="registry" class="registry" aria-live="polite"></div>
+      </article>
+    </main>
+    <script src="tooltip-position.js"></script>
+    <script src="faceclaim-registry.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

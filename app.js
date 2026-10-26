@@ -8,6 +8,7 @@
   };
 
   const THAI_COLLATOR = new Intl.Collator("th", { sensitivity: "base", numeric: true });
+  const isLockRegistry = document.body?.dataset.registry === "locks";
   const state = {
     entries: [],
     query: "",
@@ -49,7 +50,7 @@
 
       const activeLocks = buildActiveLocks(locks);
       const charactersByUser = buildCharactersByUser(characters);
-      state.entries = [
+      state.entries = isLockRegistry ? FaceclaimRegistry.build({ players, staff, npc, locks, characters }) : [
         ...buildPlayerEntries(players, activeLocks, charactersByUser),
         ...buildStaffEntries(staff, charactersByUser),
         ...buildNpcEntries(npc)
@@ -384,7 +385,7 @@
       <section class="letter-section">
         <h2 class="letter-heading">${escapeHtml(letter)}</h2>
         <hr class="letter-rule">
-        ${entries.map(renderEntry).join("")}
+        ${entries.map(isLockRegistry ? renderProtectionEntry : renderEntry).join("")}
       </section>
     `).join("");
 
@@ -443,6 +444,32 @@
         ${subCharacters.length ? `<ol class="sub-list">${subCharacters.map((character) => `<li>${renderSubCharacter(character, entry.type)}</li>`).join("")}</ol>` : ""}
       </div>
     `;
+  }
+
+  function renderProtectionEntry(entry) {
+    const main = entry.lines.find((line) => line.slot === "MAIN");
+    const subs = entry.lines.filter((line) => line.slot !== "MAIN");
+    const mainLine = main ? renderProtectionLine(main, subs.length ? "ตัวละครหลัก" : "", entry.role, entry.type)
+      : `<div class="character-line"><span class="character-name">${escapeHtml(entry.mainName)}</span><span class="character-role">(ตัวละครหลัก)</span></div>`;
+    return `<div class="entry-card entry-${escapeAttribute(entry.type)} protection-card">
+      <div class="entry-main">${mainLine}</div>
+      ${subs.length ? `<ol class="sub-list">${subs.map((line) => `<li>${renderProtectionLine(line, "ตัวละครรอง")}</li>`).join("")}</ol>` : ""}
+    </div>`;
+  }
+
+  function renderProtectionLine(line, roleLabel, role = "", type = "player") {
+    const name = isUrl(line.url) ? `<a class="character-name" href="${escapeAttribute(line.url)}" target="_blank" rel="noopener">${escapeHtml(line.name)}</a>`
+      : `<span class="character-name">${escapeHtml(line.name)}</span>`;
+    let dateBadge = '<span class="protection-lock"><span class="tag tag-lock tag-lock-permanent" title="กำหนดหมดอายุ">คุ้มครองถาวร</span></span>';
+    if (!line.permanent) {
+      const date = line.endDate ? FaceclaimRegistry.formatDate(line.endDate) : "ไม่ระบุวันหมดอายุ";
+      const pauseDate = line.pauseDate ? FaceclaimRegistry.formatDate(line.pauseDate) : "ไม่ระบุวันที่";
+      dateBadge = `<span class="protection-lock"><span class="tag tag-lock" title="กำหนดหมดอายุ" aria-label="${escapeAttribute(`วันหมดอายุ ${date}`)}">${escapeHtml(date)}</span>${line.paused ? `<span class="protection-date-divider" aria-hidden="true">|</span><span class="tag tag-lock tag-lock-paused" title="หยุดนับชั่วคราวเมื่อ" aria-label="${escapeAttribute(`หยุดนับชั่วคราวเมื่อ ${pauseDate}`)}">${escapeHtml(pauseDate)}</span>` : ""}</span>`;
+    }
+    return `<div class="character-line protection-line">
+      <span class="segment segment-name">${name}${roleLabel ? `<span class="character-role">(${escapeHtml(roleLabel)})</span>` : ""}${role ? `<span class="protection-role">${renderRole(role, type)}</span>` : ""}</span>
+      <span class="segment">เฟซเคลม ${escapeHtml(line.faceclaim || "ไม่ระบุ")}${dateBadge ? `<span class="protection-date-divider" aria-hidden="true">|</span>${dateBadge}` : ""}</span>
+    </div>`;
   }
 
   function getMainFaceclaim(entry, main) {
