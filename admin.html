@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RPTH · จัดการทะเบียน</title>
+  <link rel="icon" href="favicon-32x32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="workspace">
+    <main>
+      <div class="intro"><a class="compact-brand" href="admin.html"><img src="rpth-logo.png" alt="RPTH"></a><div><div class="eyebrow">RPTH · REGISTRY ADMIN</div><h1>จัดการทะเบียน</h1><p>กรอกข้อมูล ตรวจสอบ แล้วค่อยยืนยัน</p></div><span class="demo-pill"><span></span>พื้นที่ทดลอง</span></div>
+      <div class="editor-layout">
+        <form id="adminForm" novalidate>
+          <section class="panel form-panel">
+            <div class="action-picker"><label for="actionSelect">เลือกประเภทงาน</label><span class="select-control"><select id="actionSelect" aria-label="ประเภทงาน"></select><span class="material-symbols-rounded select-arrow" aria-hidden="true">keyboard_arrow_down</span></span></div>
+            <div class="demo-banner"><span class="material-symbols-rounded banner-icon" aria-hidden="true">info</span><span><strong>โหมดทดลอง · ข้อมูลจริงไม่เปลี่ยน</strong><span id="demoDataStatus">ยังไม่เชื่อมต่อ Apps Script</span></span><button type="button" id="historyButton">ประวัติทดลอง <span id="historyCount">0</span></button></div>
+            <ol class="steps" aria-label="ขั้นตอน"><li class="current" id="stepForm"><span>1</span>กรอกข้อมูล</li><li id="stepReview"><span>2</span>ตรวจสอบรายการ</li><li id="stepDone"><span>3</span>ยืนยันทดลอง</li></ol>
+            <div class="panel-header"><div><div class="section-kicker" id="formGroup"></div><h2 id="formTitle"></h2><p id="formDescription"></p></div><span class="form-symbol material-symbols-rounded" id="formSymbol" aria-hidden="true">person_add</span></div>
+            <div id="formFields"></div>
+            <div id="formErrors" class="form-errors" role="alert" hidden></div>
+            <div class="form-footer"><button class="text-button" type="button" id="resetButton">ล้างฟอร์ม</button><button class="primary" type="submit">ตรวจสอบและสรุป <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button></div>
+          </section>
+          <p class="draft-status" id="draftStatus" aria-live="polite">ช่องที่มี <span>*</span> จำเป็นต้องกรอก</p>
+        </form>
+      </div>
+      <footer class="page-footer"><span>RPTH Registry · UI Prototype</span><a href="index.html" target="_blank" rel="noopener">เปิดทะเบียนตัวละคร <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span></a></footer>
+    </main>
+  </div>
+  <dialog id="reviewDialog" aria-labelledby="reviewTitle"><div class="dialog-top"><div><div class="eyebrow">REVIEW CHANGES</div><h2 id="reviewTitle">ตรวจสอบก่อนยืนยัน</h2></div><button type="button" class="close-button" data-close="reviewDialog" aria-label="ปิดสรุป"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div><div id="reviewContent" class="dialog-content"></div><div class="dialog-footer"><button type="button" class="secondary" data-close="reviewDialog">กลับไปแก้ไข</button><button type="button" class="primary" id="confirmButton">ยืนยันทดลอง</button></div></dialog>
+  <dialog id="historyDialog" aria-labelledby="historyTitle"><div class="dialog-top"><div><div class="eyebrow">LOCAL HISTORY</div><h2 id="historyTitle">ประวัติทดลอง</h2></div><button type="button" class="close-button" data-close="historyDialog" aria-label="ปิดประวัติ"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div><div id="historyContent" class="dialog-content"></div><div class="dialog-footer"><button type="button" id="clearHistory" class="text-button">ล้างประวัติทดลอง</button><button type="button" class="secondary" data-close="historyDialog">ปิด</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="admin-model.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

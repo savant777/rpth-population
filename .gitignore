@@ -4,3 +4,6 @@
 *.[xX][lL][sS][xX]
 *.[xX][lL][sS][mM]
 *.[xX][lL][sS][bB]
+
+# Optional local-only admin UI fixture
+/admin-sample-data.js
