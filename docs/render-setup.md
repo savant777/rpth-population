@@ -1,26 +1,25 @@
 # GitHub Pages + Render + Apps Script (ชีตสำเนาเท่านั้น)
 
-โค้ดพร้อมติดตั้ง แต่ยังไม่ได้ push/deploy และยังไม่มีผลทดสอบเส้นทางออนไลน์ครบวงจร หน้า admin สาธารณะที่ไม่มี apiBase ยังคงเป็น demo ไม่เขียนชีต
+อัปเดต 6 พฤศจิกายน 2026: ผู้ดูแลติดตั้งแล้วและยืนยัน login/โหลดข้อมูล/ลงทะเบียนใหม่ครบ 4 ชีตผ่าน GitHub Pages → Render → Apps Script → ชีตสำเนา ผลตรวจอ่านกลับผ่าน ยังไม่ทดสอบกรณีผิดพลาดออนไลน์ครบหรือเปิดเมนูอื่น/ชีตหลัก ดูสถานะและงานค้างใน [CODEX_HANDOFF.md](../CODEX_HANDOFF.md)
 
 ## 1. Apps Script
 
-ใช้โปรเจกต์ที่ผูกกับชีตสำเนาเดิม ห้ามสร้างในชีตหลัก
+ใช้โปรเจกต์ที่ผูกกับชีตสำเนาเดิม ห้ามสร้างในชีตหลัก รัน `npm run build:apps-script` จะได้ Code.gs รวมและ manifest ใน local-delivery/ ที่ไม่ขึ้น Git
 
-- Code.gs: ใช้ InspectCopy เดิม
-- RegistrationPreview.gs: วางไฟล์เวอร์ชันล่าสุด
-- RegistrationWriteTest.gs: วางไฟล์เวอร์ชันล่าสุด
-- เพิ่ม Script ชื่อ WebGateway แล้ววาง WebGateway.gs
-- appsscript.json: ใช้ไฟล์เดิมที่มี Sheets v4 และสิทธิ์ spreadsheets / script.container.ui
+- Code.gs: วางทั้งหมดจาก local-delivery/Code.gs ที่ build จาก source ใน apps-script/
+- ลบ RegistrationPreview / RegistrationWriteTest / WebGateway แยกเดิมถ้ามี เพื่อไม่ให้ฟังก์ชันซ้ำกับไฟล์รวม
+- appsscript.json: ใช้ local-delivery/appsscript.json ที่มี Sheets v4 และสิทธิ์ spreadsheets / script.container.ui
+- อัปเดตโปรเจกต์เดิมผ่าน Manage deployments → Edit → New version → Deploy เพื่อคง URL เดิมและ Script Properties
 
 Run `setupGatewaySecret` แล้วกลับหน้า Sheets คัดลอกกุญแจเก็บไว้เฉพาะเครื่อง ไม่นำมาใส่ใน Git/แชต สคริปต์เก็บค่าไว้ใน Script Properties ชื่อ RPTH_GATEWAY_SECRET ให้อัตโนมัติ การรันซ้ำแสดงค่าเดิม ไม่หมุนกุญแจโดยไม่ตั้งใจ
 
-Deploy → New deployment → Web app → Execute as Me → Who has access Anyone → Deploy เก็บ Web app URL ที่ลงท้าย /exec เพื่อใส่ใน Render URL นี้เป็น endpoint ที่รับได้เฉพาะ POST ที่มี HMAC ถูกต้อง ไม่ใช่ API ที่เชื่อถือข้อมูลจาก browser โดยตรง doGet แสดงสถานะบริการอย่างเดียว ไม่คืนทะเบียน
+เฉพาะติดตั้งโปรเจกต์ใหม่: Deploy → New deployment → Web app → Execute as Me → Who has access Anyone → Deploy เก็บ Web app URL ที่ลงท้าย /exec เพื่อใส่ใน Render URL นี้รับคำสั่งทะเบียนผ่าน POST ที่มี HMAC ถูกต้อง ไม่เชื่อถือข้อมูลจาก browser โดยตรง doGet แสดงสถานะบริการอย่างเดียว ไม่คืนทะเบียน สำหรับโปรเจกต์ปัจจุบันให้ใช้ deployment/secret เดิม
 
 ถ้า deployment ถูกจำกัดโดย Google Workspace ต้องให้ผู้ดูแลบัญชีตรวจนโยบาย ไม่เปลี่ยนชีตเป็น public เพื่อแก้ปัญหา
 
 ## 2. Render
 
-หลังนำ source code ขึ้น Git แล้ว ใช้ Blueprint จาก render.yaml หรือสร้าง Web Service:
+บริการปัจจุบันคือ https://rpth-admin-test.onrender.com ตั้งค่าแล้ว หากต้องติดตั้งใหม่ใช้ Blueprint จาก render.yaml หรือสร้าง Web Service:
 
 - Runtime Node, Build `node --check server.mjs`, Start `node server.mjs`
 - Health `/health`, จำนวน instance 1; โค้ดอ่าน PORT และ bind 0.0.0.0 เมื่อ NODE_ENV=production
@@ -65,6 +64,6 @@ push ไฟล์หน้าเว็บแล้วเปิด admin.html จ
 
 ผู้ดูแลยืนยันการบันทึก bound dialog ครบ 4 ชีตและ verification.ok=true แล้ว และตรวจ Exempt Until = วันที่สมัคร +3 เดือนปฏิทิน กับ MAIN 1 วัน / SUB 0 ในวันสมัคร ถูกต้อง
 
-ชุดทดสอบ Node ผ่าน 34 รายการ ณ รอบเชื่อม gateway รวม login/หมดอายุ/logout, CORS, ตรวจสิทธิ์ก่อน gateway ทุกคำสั่ง, ปฏิเสธลายเซ็นผิด/nonce ซ้ำ/เวลาเก่า, แผน/สูตร/receipt และกรณี response หาย ยังไม่ได้ทดสอบจริงผ่าน Render + deployed Apps Script + GitHub Pages ต้องทดลองเส้นทางนี้กับชีตสำเนาก่อนเปิดให้ทีมใช้
+Tests อยู่ใน tests/ และขึ้น Git แล้ว รวม login/หมดอายุ/logout, CORS, สิทธิ์ gateway ทุกคำสั่ง, ลายเซ็น UTF-8/nonce ซ้ำ/เวลาเก่า, bootstrap ที่ไม่อ่าน Users Status เกินความจำเป็น, แผน/สูตร/receipt และ response หาย ผู้ดูแลทดสอบเส้นทางออนไลน์กรณีสำเร็จครบแล้ว แต่ยังต้องทดสอบกรณีผิดพลาดออนไลน์ก่อนเปิดใช้งานจริง ดูรายการใน CODEX_HANDOFF.md
 
 อ้างอิง: [Render Web Services](https://render.com/docs/web-services), [Render environment variables](https://render.com/docs/configure-environment-variables), [Apps Script web apps](https://developers.google.com/apps-script/guides/web)

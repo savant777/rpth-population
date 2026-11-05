@@ -1,0 +1,55 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+
+test('server authentication, expiry, logout, rotation and throttling', async () => {
+  const { createAuth, hashPassword } = await import('../admin-auth.mjs');
+  const hash = await hashPassword('test-only-team-password');
+  assert.match(hash, /^scrypt\$[a-f0-9]{32}\$[a-f0-9]{64}$/);
+  let time = 0;
+  const auth = createAuth({ passwordHash: hash, now: () => time });
+  assert.equal((await createAuth().login('Admin', 'anything')).status, 503);
+  assert.equal((await auth.login('Admin', 'wrong')).status, 401);
+  assert.equal((await auth.login('Unknown', 'test-only-team-password')).status, 401);
+  assert.equal((await auth.login('Regina', 'test-only-team-password')).status, 401);
+  const login = await auth.login('Admin', 'test-only-team-password');
+  assert.equal(login.status, 200);
+  assert.equal(auth.session(login.token).operator, 'Admin');
+  assert.equal(auth.session('fabricated'), null);
+  assert.equal(createAuth({ passwordHash: hash }).session(login.token), null);
+  time = 8 * 60 * 60 * 1000;
+  assert.equal(auth.session(login.token), null);
+  const second = await auth.login('Admin', 'test-only-team-password');
+  auth.logout(second.token);
+  assert.equal(auth.session(second.token), null);
+  const limited = createAuth({ passwordHash: hash, now: () => time });
+  for (let i = 0; i < 5; i++) assert.equal((await limited.login('Unknown', 'wrong')).status, 401);
+  assert.equal((await limited.login('Admin', 'test-only-team-password')).status, 429);
+  time += 15 * 60 * 1000;
+  assert.equal((await limited.login('Admin', 'test-only-team-password')).status, 200);
+});
+
+test('HTTP routes protect samples, cookies, origins and server files', async t => {
+  const { hashPassword } = await import('../admin-auth.mjs');
+  const { createApp } = await import('../server.mjs');
+  const app = createApp({ passwordHash: await hashPassword('http-test-team-password') });
+  await new Promise(resolve => app.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => app.close(resolve)));
+  const origin = `http://127.0.0.1:${app.address().port}`;
+  const post = (route, body, cookie = '', source = origin) => fetch(`${origin}/api/admin/${route}`, { method: 'POST', headers: { Origin: source, 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify(body) });
+  assert.equal((await post('verify', {})).status, 401);
+  assert.equal((await fetch(`${origin}/admin-sample-data.js`)).status, 401);
+  for (const file of ['.git/config', '.env', 'admin-auth.mjs', 'server.err.log', 'docs/admin-flow.md']) assert.equal((await fetch(`${origin}/${file}`)).status, 404);
+  assert.equal((await post('login', {}, '', 'https://other.example')).status, 403);
+  assert.equal((await post('login', null)).status, 400);
+  const response = await post('login', { operator: 'Admin', password: 'http-test-team-password' });
+  assert.equal(response.status, 200);
+  const cookie = response.headers.get('set-cookie');
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /SameSite=Strict/);
+  assert.equal((await response.json()).session.operator, 'Admin');
+  const credential = cookie.split(';')[0];
+  assert.equal((await post('verify', {}, credential)).status, 200);
+  await post('logout', {}, credential);
+  assert.equal((await post('verify', {}, credential)).status, 401);
+  assert.equal((await fetch(`${origin}/admin.html`)).status, 200);
+});

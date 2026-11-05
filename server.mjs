@@ -24,6 +24,7 @@ export function createApp({ passwordHash = process.env.RPTH_ADMIN_PASSWORD_HASH,
   if (production && (!/^https:\/\/[^/]+$/.test(appOrigin) || !auth.configured)) throw new Error('Set RPTH_APP_ORIGIN (HTTPS origin) and RPTH_ADMIN_PASSWORD_HASH before starting');
   const publicSession = session => session && ({ operator: session.operator, expiresAt: session.expiresAt });
   const files = new Set(['index.html', 'faceclaim-locks.html', 'app.js', 'faceclaim-registry.js', 'tooltip-position.js', 'styles.css', 'rpth-logo.png', 'favicon-32x32.png', 'admin.html', 'admin.css', 'admin.js', 'admin-model.js', 'admin-login.js', 'admin-config.js', 'admin-sample-data.js', 'assets/icons/material-symbols-rounded.ttf', 'assets/icons/LICENSE.txt']);
+  files.add('tools/previews/tooltip-preview.html');
   return createServer(async (request, response) => {
     const cors = production && request.headers.origin === appOrigin ? { 'Access-Control-Allow-Origin': appOrigin, Vary: 'Origin' } : {};
     const json = (status, value, headers = {}) => { response.writeHead(status, { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); response.end(JSON.stringify(value)); };

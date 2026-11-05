@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RPTH - Usage Tooltip Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles.css">
+  <style>
+    .preview-paper { max-width: 760px; padding: 32px; text-align: left; }
+    .preview-paper h1 { margin: 0 0 28px; font-size: 10px; }
+    .preview-examples { display: grid; gap: 16px; }
+    .preview-example { padding: 16px; }
+    .preview-label { margin: 0 0 12px; font-size: 10px; color: #555; }
+    .preview-line { padding-top: 100px; font-size: 10px; }
+    .preview-line .segment-name { flex: 0 0 var(--name-width); }
+    .preview-left { --name-width: 100%; }
+    .preview-center { --name-width: calc(50% - 21px); }
+    .preview-right { --name-width: calc(100% - 36px); }
+    .preview-example .tooltip { opacity: 1; transform: translate(var(--tooltip-x), 0); }
+    @media (max-width: 480px) {
+      .preview-paper { padding: 20px 12px; }
+      .preview-example { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="paper preview-paper">
+      <h1>ระยะเวลาใช้งานตัวละครหลัก</h1>
+      <div class="preview-examples">
+        <article class="entry-card preview-example">
+          <p class="preview-label">ขาด · นาฬิกาขึ้นบรรทัดใหม่ฝั่งซ้าย</p>
+          <div class="character-line preview-line preview-left">
+          <span class="segment segment-name">ตัวละครตัวอย่าง</span>
+          <span class="segment usage-wrap">
+            <button class="icon-action usage-button" type="button" aria-label="ใช้งานตัวหลัก: 5 เดือน 0 วัน · สะสม 150/180 วัน · ขาด 30 วัน"></button>
+            <span class="tooltip usage-tooltip" role="tooltip"><span class="usage-title">ใช้งานตัวหลัก: 5 เดือน 0 วัน</span><span class="usage-summary"><span>สะสม</span><span class="usage-badge usage-progress">150/180</span><span>วัน</span><span aria-hidden="true">&bull;</span><span class="usage-badge usage-remaining">ขาด 30 วัน</span></span></span>
+          </span>
+          </div>
+        </article>
+        <article class="entry-card preview-example">
+          <p class="preview-label">ครบ · นาฬิกาอยู่กลางบรรทัด</p>
+          <div class="character-line preview-line preview-center">
+          <span class="segment segment-name">ตัวละครตัวอย่าง</span>
+          <span class="segment usage-wrap">
+            <button class="icon-action usage-button" type="button" aria-label="ใช้งานตัวหลัก: 7 เดือน 29 วัน · สะสม 239/180 วัน · ครบ"></button>
+            <span class="tooltip usage-tooltip" role="tooltip"><span class="usage-title">ใช้งานตัวหลัก: 7 เดือน 29 วัน</span><span class="usage-summary"><span>สะสม</span><span class="usage-badge usage-progress">239/180</span><span>วัน</span><span aria-hidden="true">&bull;</span><span class="usage-badge usage-complete">ครบ</span></span></span>
+          </span>
+          </div>
+        </article>
+        <article class="entry-card preview-example">
+          <p class="preview-label">ไม่ทัน · นาฬิกาอยู่ท้ายบรรทัดฝั่งขวา</p>
+          <div class="character-line preview-line preview-right">
+          <span class="segment segment-name">ตัวละครตัวอย่าง</span>
+          <span class="segment usage-wrap">
+            <button class="icon-action usage-button" type="button" aria-label="ใช้งานตัวหลัก: 3 เดือน 8 วัน · สะสม 98/180 วัน · ขาด 82 วัน · ใช้งานตัวหลักไม่ครบกำหนด"></button>
+            <span class="tooltip usage-tooltip" role="tooltip"><span class="usage-title">ใช้งานตัวหลัก: 3 เดือน 8 วัน</span><span class="usage-summary"><span>สะสม</span><span class="usage-badge usage-progress">98/180</span><span>วัน</span><span aria-hidden="true">&bull;</span><span class="usage-badge usage-overdue">ขาด 82 วัน</span></span><span class="usage-divider" role="separator" aria-hidden="true"></span><span class="usage-warning"><span class="usage-badge usage-overdue">ใช้งานตัวหลักไม่ครบกำหนด</span></span></span>
+          </span>
+          </div>
+        </article>
+        <article class="entry-card preview-example">
+          <p class="preview-label">แม่กุญแจ · ซ้ายหลังตัดบรรทัด</p>
+          <div class="character-line preview-line preview-left">
+            <span class="segment segment-name">เฟซเคลมตัวอย่าง</span>
+            <span class="lock-wrap"><span class="tag tag-lock">ล็อกเฟซเคลมถึง 25/11/2026</span><button class="icon-action lock-button" type="button" aria-label="ล็อกเฟซเคลมถึง 25/11/2026"></button><span class="tooltip lock-tooltip" role="tooltip">ล็อกเฟซเคลมถึง 25/11/2026</span></span>
+          </div>
+        </article>
+        <article class="entry-card preview-example">
+          <p class="preview-label">แม่กุญแจ · กลาง</p>
+          <div class="character-line preview-line preview-center">
+            <span class="segment segment-name">เฟซเคลมตัวอย่าง</span>
+            <span class="lock-wrap"><span class="tag tag-lock">ล็อกเฟซเคลมถึง 25/11/2026</span><button class="icon-action lock-button" type="button" aria-label="ล็อกเฟซเคลมถึง 25/11/2026"></button><span class="tooltip lock-tooltip" role="tooltip">ล็อกเฟซเคลมถึง 25/11/2026</span></span>
+          </div>
+        </article>
+        <article class="entry-card preview-example">
+          <p class="preview-label">แม่กุญแจ · ขวา</p>
+          <div class="character-line preview-line preview-right">
+            <span class="segment segment-name">เฟซเคลมตัวอย่าง</span>
+            <span class="lock-wrap"><span class="tag tag-lock">ล็อกเฟซเคลมถึง 25/11/2026</span><button class="icon-action lock-button" type="button" aria-label="ล็อกเฟซเคลมถึง 25/11/2026"></button><span class="tooltip lock-tooltip" role="tooltip">ล็อกเฟซเคลมถึง 25/11/2026</span></span>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script src="../../tooltip-position.js"></script>
+  <script>
+    function positionPreviewTooltips() {
+      window.RpthTooltips.position(document.querySelector(".paper"));
+    }
+    window.addEventListener("load", positionPreviewTooltips);
+    window.addEventListener("resize", () => requestAnimationFrame(positionPreviewTooltips));
+    document.fonts.ready.then(positionPreviewTooltips);
+  </script>
+</body>
+</html>

@@ -17,3 +17,11 @@
 
 # Generated one-file Apps Script handoff (sources live in apps-script/)
 /local-delivery/
+
+# Source snapshots and spreadsheet backups stay on the owner's computer
+/local-reference/
+
+# Local caches
+node_modules/
+__pycache__/
+*.pyc
