@@ -63,7 +63,11 @@ function doPost(event) {
   } finally { RPTH_WEB_CONTEXT_ = null; }
 }
 function gatewaySignature_(text, secret) {
-  return Utilities.computeHmacSha256Signature(text, secret).map(function (byte) { return ('0' + (byte & 255).toString(16)).slice(-2); }).join('');
+  // Match Node's UTF-8 bytes explicitly, including Thai registry responses.
+  var bytes = Utilities.computeHmacSha256Signature(text, secret, Utilities.Charset.UTF_8);
+  return Array.prototype.map.call(bytes, function (byte) {
+    return ('0' + (byte & 255).toString(16)).slice(-2);
+  }).join('');
 }
 function gatewaySafeEqual_(expected, actual) {
   if (typeof actual !== 'string' || actual.length !== expected.length) return false;
