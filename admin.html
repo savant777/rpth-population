@@ -11,9 +11,22 @@
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <div class="workspace">
+  <main id="loginPanel" class="login-shell">
+    <form id="loginForm" class="login-form" aria-labelledby="loginTitle">
+      <img class="login-logo" src="rpth-logo.png" alt="RPTH">
+      <h1 id="loginTitle">จัดการทะเบียนประชากร</h1>
+      <label class="login-field"><span class="sr-only">Username</span><input id="loginOperator" type="text" value="Admin" placeholder="Username" autocomplete="username" required disabled></label>
+      <label class="login-field"><span class="sr-only">Password</span><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required maxlength="1024" disabled></label>
+      <button id="loginSubmit" class="primary" type="submit" disabled>Login</button>
+      <p id="loginStatus" class="login-status" role="status">กำลังตรวจสอบเซสชัน</p>
+      <p id="loginError" role="alert" hidden></p>
+      <button id="demoEntry" class="text-button" type="button" hidden>เปิด UI ทดลอง</button>
+    </form>
+  </main>
+  <div class="workspace" id="adminWorkspace" hidden>
     <main>
       <div class="intro"><a class="compact-brand" href="admin.html"><img src="rpth-logo.png" alt="RPTH"></a><div><div class="eyebrow">RPTH · REGISTRY ADMIN</div><h1>จัดการทะเบียน</h1><p>กรอกข้อมูล ตรวจสอบ แล้วค่อยยืนยัน</p></div><span class="demo-pill"><span></span>พื้นที่ทดลอง</span></div>
+      <div class="session-bar"><span id="operatorLabel"></span><button type="button" id="logoutButton" class="secondary">ออกจากระบบ</button></div>
       <div class="editor-layout">
         <form id="adminForm" novalidate>
           <section class="panel form-panel">
@@ -34,7 +47,9 @@
   <dialog id="reviewDialog" aria-labelledby="reviewTitle"><div class="dialog-top"><div><div class="eyebrow">REVIEW CHANGES</div><h2 id="reviewTitle">ตรวจสอบก่อนยืนยัน</h2></div><button type="button" class="close-button" data-close="reviewDialog" aria-label="ปิดสรุป"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div><div id="reviewContent" class="dialog-content"></div><div class="dialog-footer"><button type="button" class="secondary" data-close="reviewDialog">กลับไปแก้ไข</button><button type="button" class="primary" id="confirmButton">ยืนยันทดลอง</button></div></dialog>
   <dialog id="historyDialog" aria-labelledby="historyTitle"><div class="dialog-top"><div><div class="eyebrow">LOCAL HISTORY</div><h2 id="historyTitle">ประวัติทดลอง</h2></div><button type="button" class="close-button" data-close="historyDialog" aria-label="ปิดประวัติ"><span class="material-symbols-rounded" aria-hidden="true">close</span></button></div><div id="historyContent" class="dialog-content"></div><div class="dialog-footer"><button type="button" id="clearHistory" class="text-button">ล้างประวัติทดลอง</button><button type="button" class="secondary" data-close="historyDialog">ปิด</button></div></dialog>
   <div id="toast" class="toast" role="status" hidden></div>
+  <script src="admin-config.js"></script>
   <script src="admin-model.js"></script>
+  <script src="admin-login.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

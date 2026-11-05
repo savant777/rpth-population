@@ -1,11 +1,13 @@
 (async function() {
   "use strict";
+  await window.AdminAccess.ready;
   const M=window.AdminModel;
   // Optional local-only fixture. The deployed UI must not depend on a sample file.
-  if(["localhost","127.0.0.1","[::1]"].includes(location.hostname)){
+  const live=window.AdminAccess.live;
+  if(!live&&["localhost","127.0.0.1","[::1]"].includes(location.hostname)){
     try{await import("./admin-sample-data.js");}catch{/* No local sample: show the UI without registry records. */}
   }
-  const data=window.AdminSampleData||{players:[],userIds:[],npcs:[],staffFaces:[],locks:[]};
+  const data=(live?window.AdminAccess.bootstrap:window.AdminSampleData)||{players:[],userIds:[],npcs:[],staffFaces:[],locks:[]};
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const icon=name=>`<span class="material-symbols-rounded" aria-hidden="true">${name}</span>`;
@@ -29,7 +31,7 @@
   const newFields=(url=true)=>field("name",action==="npc"?"ชื่อ NPC":"ชื่อตัวละคร",{required:true,placeholder:"เช่น Evelyn R. Ashford"})+field("faceclaim","เฟซเคลม",{required:true,placeholder:"ชื่อบุคคล / ชื่อวง (ถ้ามี)"})+(url?field("url","ลิงก์ประวัติตัวละคร",{required:true,wide:true,type:"url",placeholder:"https://roleplayth.com/showthread.php?..."}):"");
   function renderNav(){
     const groups=[...new Set(M.actions.map(a=>a.group))];
-    $("actionSelect").innerHTML=groups.map(group=>`<optgroup label="${group}">${M.actions.filter(a=>a.group===group).map(a=>`<option value="${a.id}" ${a.id===action?"selected":""}>${a.title}</option>`).join("")}</optgroup>`).join("");
+    $("actionSelect").innerHTML=groups.map(group=>`<optgroup label="${group}">${M.actions.filter(a=>a.group===group&&(!live||data.supportedActions.includes(a.id))).map(a=>`<option value="${a.id}" ${a.id===action?"selected":""}>${a.title}</option>`).join("")}</optgroup>`).join("");
   }
   function renderForm(next) {
     action=next;pending=null;renderNav();setStep(1);
@@ -105,8 +107,12 @@
     if($("account"))updateAccount();for(const key of ["charId","lockId","replaceId"]){const el=$(key);if(el&&draft[key])el.value=draft[key];}updateLocks();if($("lockId")&&draft.lockId)$("lockId").value=draft.lockId;$("draftStatus").textContent="กู้คืนแบบร่างในเบราว์เซอร์นี้แล้ว";
   }
   function setStep(step){["stepForm","stepReview","stepDone"].forEach((id,i)=>$(id).classList.toggle("current",i===step-1));}
-  function showErrors(errors){$("formErrors").innerHTML=`<ul>${errors.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;$("formErrors").hidden=false;$("formErrors").scrollIntoView({behavior:"smooth",block:"center"});}
+  function showErrors(errors){$("formErrors").classList.remove("success");$("formErrors").innerHTML=`<ul>${errors.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;$("formErrors").hidden=false;$("formErrors").scrollIntoView({behavior:"smooth",block:"center"});}
   function showReview(plan,f){
+    if(live){
+      $("reviewContent").innerHTML=`<p class="review-meta">ลงทะเบียนผู้เล่นใหม่ · วันที่ ${esc(M.displayDate(f.date))} · บัญชี ${esc(plan.operator)}<br>ยืนยันแล้วจะเพิ่มข้อมูลลงชีตสำเนาทดสอบ</p>${plan.warnings.map(w=>`<p class="review-warning">${esc(w)}</p>`).join("")}${plan.changes.map(change=>`<section class="review-sheet"><h3>${esc(change.sheet)}</h3><div class="change-item"><dl>${Object.entries(change.fields).map(([key,value])=>`<dt>${esc(key)}</dt><dd>${esc(value===""?"(ว่าง)":value)}</dd>`).join("")}</dl>${change.formulas?`<p>ใช้สูตรเดิม: ${change.formulas.map(esc).join(", ")}</p>`:""}</div></section>`).join("")}`;
+      pending={action,values:f,plan};setStep(2);$("reviewDialog").showModal();return;
+    }
     const config=M.actions.find(a=>a.id===action),sheets=[...new Set(plan.patches.map(p=>p.sheet))];
     $("reviewContent").innerHTML=`<p class="review-meta"><strong>${esc(config.title)}</strong><br>วันที่มีผล ${esc(M.displayDate(f.date))}${f.post?` · โพสต์ #${esc(f.post)}`:""}<br>${plan.patches.length} รายการ ใน ${sheets.length} ชีต · เป็นการทดลองเท่านั้น</p>${plan.batch?.length?`<div class="bulk-table-wrap"><table class="bulk-table"><thead><tr><th>รายชื่อที่วาง</th><th>UID</th><th>ผลจับคู่</th></tr></thead><tbody>${plan.batch.map(r=>`<tr><td>${esc(r.input)}</td><td>${esc(r.player?.uid||"—")}</td><td class="${r.status!=="พร้อมปรับ"?"bad":""}">${esc(r.status)}</td></tr>`).join("")}</tbody></table></div>`:""}${plan.warnings.map(w=>`<p class="review-warning">${esc(w)}</p>`).join("")}${sheets.map(sheet=>`<section class="review-sheet"><h3>${esc(sheet)}<small>${plan.patches.filter(p=>p.sheet===sheet).length} รายการ</small></h3>${plan.patches.filter(p=>p.sheet===sheet).map(p=>`<div class="change-item"><strong>${esc(p.label)}</strong><dl>${Object.entries(p.fields).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v===true?"TRUE":v===false?"FALSE":v===""?"(ว่าง)":v)}</dd>`).join("")}</dl></div>`).join("")}</section>`).join("")}<p class="inline-note">ยืนยันเพื่อทดลองขั้นตอนเท่านั้น ยังไม่มีการส่งข้อมูลไป Apps Script หรือเปลี่ยนทะเบียนจริง</p>`;
     pending={action,values:f,plan};setStep(2);$("reviewDialog").showModal();
@@ -134,18 +140,23 @@
     if(calendar){const display=$(calendar.dataset.dateTarget),picker=$(`${display.id}-picker`);picker.value=M.parseInputDate(display.value);if(typeof picker.showPicker==="function")picker.showPicker();else display.focus();}
     if(event.target.closest("#sampleNames")){$("names").value=data.players.filter(p=>p.status&&M.activeChar(p)).slice(0,3).map(p=>p.uid).join("\n");saveDraft();}
   });
-  $("adminForm").addEventListener("submit",event=>{
+  $("adminForm").addEventListener("submit",async event=>{
     event.preventDefault();updateDynamic();
+    try{await window.AdminAccess.verify();}catch{return;}
     const badDates=[...$("adminForm").querySelectorAll('[data-date-display]')].filter(el=>!el.disabled&&el.value.trim()&&!M.parseInputDate(el.value));
     if(badDates.length){showErrors(["กรุณาระบุวันที่ที่มีอยู่จริงในรูปแบบ วัน/เดือน/ปี ค.ศ. เช่น 05/11/2026"]);return;}
-    const f=values();const plan=M.plan(action,f,data);if(plan.errors.length){showErrors(plan.errors);return;}$("formErrors").hidden=true;showReview(plan,f);
+    const f=values();
+    if(live){const button=$("adminForm").querySelector('button[type="submit"]');button.disabled=true;try{const plan=await window.AdminAccess.preview(action,f);if(JSON.stringify(values())!==JSON.stringify(f)){showErrors(["ข้อมูลเปลี่ยนระหว่างตรวจ กรุณาตรวจสอบและสรุปใหม่"]);return;}if(plan.errors.length){showErrors(plan.errors);return;}if(!plan.canCommit)throw new Error("ยังไม่พร้อมยืนยันบันทึก");showReview(plan,f);}catch(error){showErrors([error.message]);}finally{button.disabled=false;}return;}
+    const plan=M.plan(action,f,data);if(plan.errors.length){showErrors(plan.errors);return;}$("formErrors").hidden=true;showReview(plan,f);
   });
   $("resetButton").addEventListener("click",()=>{storage.set(`rpth-admin-draft-${action}`,null);renderForm(action);$("draftStatus").innerHTML='ช่องที่มี <span>*</span> จำเป็นต้องกรอก';});
-  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).close()));
+  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.close==="reviewDialog"&&$("confirmButton").disabled)return;$(b.dataset.close).close();}));
+  $("reviewDialog").addEventListener("cancel",event=>{if($("confirmButton").disabled)event.preventDefault();});
   $("reviewDialog").addEventListener("close",()=>{if(pending)setStep(1);});
-  $("confirmButton").addEventListener("click",()=>{if(!pending)return;history=Array.isArray(history)?history:[];history.unshift({action,time:new Date().toISOString(),count:pending.plan.patches.length,who:pending.values.name||selectedPlayer()?.mainName||"หลายรายชื่อ"});history=history.slice(0,50);const saved=storage.set("rpth-admin-demo-history",history);pending=null;$("reviewDialog").close();setStep(3);renderHistory();showToast(saved?"ทดลองยืนยันแล้ว · เก็บเฉพาะประวัติในเครื่องนี้ ทะเบียนจริงไม่เปลี่ยน":"ทดลองยืนยันแล้ว แต่เบราว์เซอร์ไม่อนุญาตให้เก็บประวัติ · ทะเบียนจริงไม่เปลี่ยน");});
+  $("confirmButton").addEventListener("click",async()=>{if(!pending)return;const button=$("confirmButton");button.disabled=true;try{const session=await window.AdminAccess.verify();if(!pending)return;if(live){const receipt=await window.AdminAccess.commit({requestId:pending.plan.requestId,previewToken:pending.plan.previewToken});pending=null;$("reviewDialog").close();setStep(3);$("formErrors").classList.toggle("success",receipt.verification?.ok===true);$("formErrors").innerHTML=`<p>${esc(receipt.note)}</p><pre style="white-space:pre-wrap">${esc(JSON.stringify({requestId:receipt.requestId,rows:receipt.rows,verification:receipt.verification},null,2))}</pre>`;$("formErrors").hidden=false;showToast(receipt.note);try{Object.assign(data,await window.AdminAccess.refresh());}catch{showToast("บันทึกแล้ว แต่โหลดข้อมูลใหม่ไม่ได้ กรุณาโหลดหน้าใหม่ก่อนทำรายการต่อ");}return;}history=Array.isArray(history)?history:[];history.unshift({action,time:new Date().toISOString(),count:pending.plan.patches.length,who:session.operator});history=history.slice(0,50);const saved=storage.set("rpth-admin-demo-history",history);pending=null;$("reviewDialog").close();setStep(3);renderHistory();showToast(saved?"ทดลองยืนยันแล้ว · เก็บเฉพาะประวัติในเครื่องนี้ ทะเบียนจริงไม่เปลี่ยน":"ทดลองยืนยันแล้ว แต่เบราว์เซอร์ไม่อนุญาตให้เก็บประวัติ · ทะเบียนจริงไม่เปลี่ยน");}catch(error){if(live)showToast(`${error.message} · หากการเชื่อมต่อขาด ให้กดยืนยันคำขอเดิมซ้ำ`);else pending=null;}finally{button.disabled=false;}});
   $("historyButton").addEventListener("click",()=>{renderHistory();$("historyDialog").showModal();});
   $("clearHistory").addEventListener("click",()=>{history=[];storage.set("rpth-admin-demo-history",history);renderHistory();});
   if(!data.players.length)$("demoDataStatus").textContent="ยังไม่เชื่อมข้อมูลทะเบียน · ยังตรวจความซ้ำในข้อมูลจริงไม่ได้";
+  if(live){$("demoDataStatus").textContent="ข้อมูลสดจากชีตสำเนา · เปิดเฉพาะลงทะเบียนผู้เล่นใหม่";document.querySelector(".demo-banner strong").textContent="เชื่อมชีตสำเนาทดสอบ · ยืนยันแล้วเขียนข้อมูลในสำเนา";$("confirmButton").textContent="ยืนยันเพิ่มลงชีตสำเนา";$("stepDone").lastChild.textContent="บันทึกในสำเนา";$("historyButton").hidden=true;}
   renderForm(action);renderHistory();
 })();

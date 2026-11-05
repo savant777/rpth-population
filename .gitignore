@@ -7,3 +7,13 @@
 
 # Optional local-only admin UI fixture
 /admin-sample-data.js
+
+# Credentials and local server output
+.env
+.env.*
+!.env.example
+*.log
+/.rpth-render-secrets.txt
+
+# Generated one-file Apps Script handoff (sources live in apps-script/)
+/local-delivery/

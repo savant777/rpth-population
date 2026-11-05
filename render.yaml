@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rpth-admin-test
+    runtime: node
+    plan: free
+    numInstances: 1
+    buildCommand: node --check server.mjs
+    startCommand: node server.mjs
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RPTH_APP_ORIGIN
+        value: https://savant777.github.io
+      - key: RPTH_ADMIN_PASSWORD_HASH
+        sync: false
+      - key: RPTH_APPS_SCRIPT_URL
+        sync: false
+      - key: RPTH_GATEWAY_SECRET
+        sync: false
