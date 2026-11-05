@@ -22,8 +22,8 @@ test("sub locks retain owner name without adding the unprotected main faceclaim"
   assert.ok(!entry.searchText.includes("main face"));
 });
 
-test("all staff characters and NPCs are permanently protected, including missing faceclaims", () => {
-  const entries = registry.build(data({ players: [], locks: [], staff: [{ UserID: "1" }], npc: [{ UserID: "2", "Display Name": "NPC Name", Faceclaim: "" }] }), now);
+test("staff characters and NPCs with faceclaims are permanently protected", () => {
+  const entries = registry.build(data({ players: [], locks: [], staff: [{ UserID: "1" }], npc: [{ UserID: "2", "Display Name": "NPC Name", Faceclaim: "NPC Face" }] }), now);
   assert.equal(entries.flatMap((entry) => entry.lines).length, 3);
   assert.ok(entries.flatMap((entry) => entry.lines).every((line) => line.permanent));
 });
@@ -64,4 +64,23 @@ test("Thai display dates and invalid date handling", () => {
   assert.equal(registry.formatDate("3/12/2026"), "03/12/2026");
   assert.equal(registry.formatDate("03/12/2569"), "03/12/2026");
   assert.equal(registry.formatDate("31/02/2026"), "ไม่ระบุวันที่");
+});
+
+test("missing and whitespace-only faceclaims are excluded for every entry type", () => {
+  for (const faceclaim of [undefined, null, "", "   "]) {
+    assert.equal(registry.build(data({ locks: [{ ...lock, "Lock Face Claim": faceclaim }] }), now).length, 0);
+    assert.equal(registry.build(data({ players: [], staff: [{ UserID: "1" }], characters: [{ ...main, "Character Faceclaim": faceclaim }] }), now).length, 0);
+    assert.equal(registry.build(data({ players: [], npc: [{ "Display Name": "NPC Name", Faceclaim: faceclaim }] }), now).length, 0);
+  }
+  assert.equal(registry.build(data({ players: [], staff: [{ UserID: "9", "Display Name": "Staff without characters" }] }), now).length, 0);
+});
+
+test("missing staff faceclaims retain other characters and names have no special exclusion", () => {
+  const entries = registry.build(data({
+    players: [], staff: [{ UserID: "1" }],
+    characters: [{ ...main, "Character Faceclaim": " " }, { ...sub, "Character Name": "Hwang Pyeonjae" }]
+  }), now);
+  assert.equal(entries.length, 1);
+  assert.deepEqual(entries[0].lines.map((line) => line.name), ["Hwang Pyeonjae"]);
+  assert.ok(!entries[0].searchText.includes("main face"));
 });

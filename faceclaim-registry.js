@@ -61,6 +61,8 @@
     }
     const result = [];
     const finish = (entry) => {
+      entry.lines = entry.lines.filter((line) => clean(line.faceclaim));
+      if (!entry.lines.length) return;
       entry.raceSearchText = "";
       entry.searchText = [entry.mainName, entry.type, ...entry.lines.flatMap((line) => [line.name, line.faceclaim])].join(" ").normalize("NFKC").toLowerCase();
       result.push(entry);
