@@ -83,7 +83,9 @@ function gatewayBootstrap_() {
   var book = adminTestBook_();
   var report = inspectCopyStructure_(book);
   if (!report.headersMatch || report.timezone !== 'Asia/Bangkok') throw new Error('โครงสร้างชีตสำเนาเปลี่ยน');
-  var users = readPreviewTable_(book, 'Users', ['UserID', 'Username', 'UserType', 'Status']);
+  // Bootstrap needs only IDs. Users.Status is a derived formula and does not
+  // determine eligibility for registering a new user; Player supplies status.
+  var users = readPreviewTable_(book, 'Users', ['UserID']);
   var chars = readPreviewTable_(book, 'Characters', ['UserID', 'CharID', 'Character Name', 'Character Slot', 'Character Faceclaim', 'Character Url', 'Is Active Character']);
   var players = readPreviewTable_(book, 'Player', ['UserID', 'Display Name', 'Race', 'Status', 'Active Character']);
   var npcs = readPreviewTable_(book, 'NPC', ['UserID', 'Display Name', 'Faceclaim', 'Race', 'Link']);

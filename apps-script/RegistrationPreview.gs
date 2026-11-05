@@ -60,10 +60,10 @@ function readPreviewTable_(book, name, headers) {
   var end = sheet.getLastRow();
   if (end > 10000) throw new Error('ตาราง ' + name + ' เกินขอบเขตตรวจทดลอง 10,000 แถว');
   if (end < 2) return [];
-  return sheet.getRange(2, 1, end - 1, headers.length).getValues().map(function (values) {
+  return sheet.getRange(2, 1, end - 1, headers.length).getValues().map(function (values, rowIndex) {
     var row = {};
     headers.forEach(function (header, index) {
-      if (typeof values[index] === 'string' && /^#(REF!|N\/A|VALUE!|ERROR!|DIV\/0!|NAME\?|NUM!|SPILL!)/.test(values[index])) throw new Error('พบข้อผิดพลาดสูตรใน ' + name + ' กรุณาตรวจก่อน');
+      if (typeof values[index] === 'string' && /^#(REF!|N\/A|VALUE!|ERROR!|DIV\/0!|NAME\?|NUM!|SPILL!)/.test(values[index])) throw new Error('พบข้อผิดพลาดสูตรใน ' + name + ' แถว ' + (rowIndex + 2) + ' คอลัมน์ ' + header + ': ' + values[index]);
       row[header] = values[index];
     });
     return row;
