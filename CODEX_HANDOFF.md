@@ -7,13 +7,14 @@
 ### ความคืบหน้าเพิ่มเติม 6 พ.ย. — อ่านก่อนสถานะเดิมด้านล่าง
 
 - ผู้ดูแลขอให้ทำครบทุกฟอร์มเป็นลำดับ ส่งให้ตรวจทีละฟอร์ม และรวบรวม UI ไว้แก้ท้ายสุด แผน/ผลทดสอบอยู่ docs/admin-test-matrix.md และ docs/admin-ui-backlog.md
-- เพิ่ม CharacterEdit.gs (server planner + reuse preview/atomic commit/receipt/readback), Node/gateway รองรับ edit, UI แสดงเมนูตาม supportedActions ยังต้อง deploy ชุดนี้และทดสอบออนไลน์ก่อนนับ edit ว่าพร้อมตรวจ ไม่ใช่เฉพาะ demo อีกต่อไป local tests 62/62 รวมไฟล์เก่า untracked15 tests; builder30 functions (ยังไม่ deploy ขณะเขียนบันทึกนี้)
+- เพิ่ม CharacterEdit.gs (server planner + reuse preview/atomic commit/receipt/readback), Node/gateway รองรับ edit, UI แสดงเมนูตาม supportedActions deploy และทดสอบออนไลน์ edit กรณีปกติครบ4แบบแล้ว พร้อมให้ผู้ดูแลตรวจทีละฟอร์ม local tests63/63 รวมไฟล์เก่า untracked15 tests; builder30 functions รายละเอียด requestId/แถวจริงใน docs/admin-test-matrix.md ยังไม่ประกาศว่าครบทั้งระบบ
 - register stale preview ผ่านออนไลน์: เปลี่ยนเฉพาะ log!M1161 ของ QA หลังเปิดสรุป B, server ปฏิเสธ ไม่มีแถว1162เพิ่ม คืน Note เดิมและปิดสรุปแล้ว รายละเอียดใน test matrix
 - ผู้ดูแลยืนยันกติกาใหม่: Inactive ให้ Post Check/Activity Check/Reclaim Approved FALSE ทั้งหมดและยกเลิกสิทธิ์ล็อกที่เกี่ยวข้อง; ต่อหลังหมดอายุ LockID ใหม่เริ่มวันอนุมัติ; ไม่เก็บ extra-sub permission แยก คุยตกลงก่อนกรอกฟอร์มแล้ว; MAIN ใหม่เก็บลิงก์ใหม่ ตัวเดิมคงลิงก์เดิม; ล็อกเมจที่ใช้อยู่พักนับวันอนุมัติทันที; ตัวพักนับเปลี่ยนเมจให้ยกเลิกสิทธิ์เดิมได้เลย แก้ admin-flow.md แล้ว
 - งานค้างของกติกาล็อกคืออ่านชื่อ Type native ที่สูตร/validation รองรับก่อนเขียนเหตุการณ์; edit ของตัวมีล็อกยังถูก block ไว้เพราะโค้ดเหตุการณ์ล็อกยังไม่เสร็จ ไม่ใช่เพราะผู้ดูแลยังไม่ตอบกติกา
 - ไฟล์เก่า untracked admin-model.test.cjs / tools/export-admin-sample.py / HTMLไทย ยังไม่รวมเป็นงานรอบนี้
 - ชุดนี้ commit/push แล้วที่ `3ada766` สำรอง Code เดิมผ่าน editor เป็น local-delivery/Code-before-edit-20261106.gs แล้ววาง bundle ที่ตรวจเทียบเนื้อหาตรงกันและ deploy Apps Script เวอร์ชัน6 สำเร็จ `/exec` เดิม ภาพ local-delivery/apps-script-deployed-edit-20261106.jpg โปรเจกต์ bound ที่ยืนยันลิงก์ชีตสำเนาแล้ว: https://script.google.com/u/1/home/projects/1pqjTeN1jl3dF8cUqcE8rkSrV4TIus_4UlO1IO3fOfqT9IvKahN-A-i7O/edit ไม่แก้ properties หรือ manifest Render service srv-dbmb2k1srm7s73fjtpug trigger manual deploy3ada766 แล้ว (รอผล Live/ทดสอบออนไลน์ตอนบันทึกบรรทัดนี้)
 - ตรวจ native dropdown log เฟซเคลมล็อก!H2 แล้วมี เริ่มล็อก / ต่ออายุ / พักนับ / เริ่มนับต่อ / ยกเลิก และ Faceclaim Locks!F2 ใช้สถานะ ยกเลิก รองรับใน SWITCH; ยังต้องอ่านสูตรคำนวณ log คอลัมน์ L:Q ที่ซ่อนอยู่ก่อนพัฒนา lock transactions ไม่อ้างว่าเห็นสูตรซ่อนครบแล้ว
+- สถานะล่าสุด: Render3ada766 deploy Live สำเร็จ24.4s ทดสอบแล้วว่า session เก่าถูกปฏิเสธหลัง restart ผู้ดูแล login ใหม่ให้แล้ว Apps Scriptเวอร์ชัน7ใช้source d990ad2 แก้ prefix headers ของ NPC/locks ที่พบจาก online preview ไม่ต้อง redeployRenderสำหรับการแก้ gs อย่างเดียว (ไม่มี secret ใหม่) ใบรับ edit ทุกกรณี verification.ok=true ไม่มีformulaErrors log1162–1165ครบ,1166ว่างหลังลอง no-op/เมจมีเจ้าของ ตัวรองQA407เป็นfixtureที่เพิ่มโดยตรง ไม่ใช่ผลทดสอบฟอร์มลงทะเบียนตัวรอง
 
 1. `git status --short --branch` ก่อน แล้ว `git pull --ff-only origin main` เมื่อไม่มีการแก้ไขที่ชนกัน ห้าม reset ทับงานของอีกเครื่อง
 2. อ่านไฟล์นี้ ตามด้วย `docs/admin-flow.md`, `docs/apps-script-plan.md`, `docs/render-setup.md`
@@ -43,7 +44,7 @@
 
 ### ยังไม่พร้อมเปิดเต็มระบบ
 
-- **เขียนได้เฉพาะ register บนชีตสำเนา** ไม่ได้เปิดชีตหลัก และเมนูอื่นยังเป็นโมเดลทดลอง ยังไม่มี backend สำหรับ flow เหล่านั้น
+- **เขียนได้ register และ edit บนชีตสำเนา** กรณี edit ต้องยกเลิก/พักนับล็อกยังถูกปิดไว้เพื่อรอเชื่อม flow ล็อก ไม่ได้เปิดชีตหลัก เมนูอื่นยังไม่มี backend
 - การทดสอบออนไลน์กรณีข้อมูลซ้ำ/สองคำขอพร้อมกัน/สรุปเก่า/เน็ตขาด ยังไม่ครบ แม้มี automated tests ในเครื่องแล้ว
 - ยังไม่ได้ทำระบบ sync/deploy Apps Script อัตโนมัติ ขณะนี้มี builder รวมไฟล์ลดขั้นคัดลอกด้วยมือ
 - Render ใช้ process เดียว memory sessions/rate limit; restart/redeploy ทำให้ login ใหม่ ไม่รองรับหลาย instance
@@ -93,7 +94,7 @@ npm run build:apps-script
 
 build ต้องสำเร็จ จะได้ `local-delivery/Code.gs`, `local-delivery/appsscript.json`, `local-delivery/INSTALL.txt` อิง path ของ script ไม่ขึ้นกับ cwd และตรวจ syntax/ชื่อฟังก์ชันซ้ำก่อนเขียนไฟล์
 
-Source ทั้ง 4 ไฟล์ถูกวางรวมใน **Code.gs ไฟล์เดียว** ใน Apps Script โปรเจกต์ที่ผู้ดูแลใช้อยู่ อย่าสั่งให้เพิ่ม source แยกซ้ำอีก ต้องเหลือ Code.gs และ manifest (อาจมี DiagnoseGateway แยกเพื่อ debug ได้)
+Source ทั้ง 5 ไฟล์ (รวม CharacterEdit.gs) ถูกวางรวมใน **Code.gs ไฟล์เดียว** ใน Apps Script โปรเจกต์ที่ผู้ดูแลใช้อยู่ อย่าสั่งให้เพิ่ม source แยกซ้ำอีก ในโปรเจกต์จริงไฟล์ Code แสดงชื่อไทยว่า รหัส.gs และมี DiagnoseGateway.gs กับ manifest อยู่เดิม
 
 ผลตรวจรอบส่งมอบนี้: Node v22.17.0, `npm test` ผ่าน 36/36 รายการ, `npm run build:apps-script` สำเร็จ ตรวจ syntax ของ Code.gs และชื่อฟังก์ชันไม่ซ้ำครบ 27 ฟังก์ชัน ไม่มีการเขียนชีตหรือ redeploy บริการออนไลน์ระหว่างจัดส่งมอบ
 
@@ -144,14 +145,14 @@ Source บน Git กับ deployment บน Apps Script แยกกัน pus
 
 ทุก flow ต้องมี preview แยกจาก commit ตรวจสิทธิ์และข้อมูลใหม่ที่ server รักษา native formulas แสดงผลแยกชีตก่อนยืนยัน ป้องกัน request ซ้ำและมี receipt อ่านผลกลับให้ครบ เมนูที่ server ยังไม่รองรับต้องไม่เปิดให้เขียนจริง
 
-### C. รวมคำถามธุรกิจที่ค้างเป็นชุดเดียว
+### C. ข้อสรุปธุรกิจที่ยืนยัน 6 พ.ย. — ไม่ถามซ้ำ
 
-- ค่า Post Check / Activity Check / Reclaim Approved ตอนปรับ Inactive และสิทธิ์ล็อกที่เกี่ยวข้อง
+- Post Check / Activity Check / Reclaim Approved ตอน Inactive เป็น FALSE ทั้งหมด และยกเลิกสิทธิ์ล็อกที่เกี่ยวข้อง
 - Type สำหรับกลับมานับต่อ/ยกเลิกที่สูตรล่าสุดรองรับ ต้องอ่าน native/validation ไม่อิงชื่อในเอกสารสูตรเก่าอย่างเดียว
-- ต่ออายุหลังหมดอายุใช้ LockID/วันเริ่มอย่างไร
-- สิทธิ์เพิ่มตัวรองพิเศษเก็บไว้ที่ใด
-- ลิงก์ประวัติเมื่อเปลี่ยน MAIN จัดการอย่างไร
-- เริ่มล็อกเมจที่ใช้อยู่วันเดียวกันอย่างไร และกรณีตัวที่พักนับเปลี่ยนไปใช้เมจอื่น
+- ต่ออายุหลังหมดอายุใช้ LockID ใหม่ เริ่มวันอนุมัติใหม่
+- ไม่ต้องมีที่เก็บสิทธิ์เพิ่มตัวรองพิเศษแยก ผู้ดูแลคุยตกลงก่อนบันทึกแล้ว ใช้ฟอร์มเพิ่มปกติ
+- MAIN ใหม่เก็บลิงก์ใหม่ ตัวละครเดิมคงลิงก์ของตัวเอง
+- เริ่มล็อกเมจที่ใช้อยู่ให้พักนับทันทีวันอนุมัติ ตัวพักนับเปลี่ยนเมจให้ยกเลิกสิทธิ์เดิม
 
 มีข้อมูลบางส่วนใน docs/reference/ ที่ดูเหมือนข้อสรุปแต่เก่ากว่าเอกสาร flow ห้ามนำมาฟันธงแทนผู้ดูแล
 

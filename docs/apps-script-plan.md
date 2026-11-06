@@ -8,7 +8,7 @@
 
 ผู้ดูแล deploy WebGateway แล้ว และยืนยัน login/อ่านข้อมูล/ลงทะเบียนใหม่ผ่าน GitHub Pages → Render → Apps Script → สำเนาครบ 4 ชีต ผลตรวจอ่านกลับผ่าน ดูหลักฐานและงานค้างล่าสุดใน [CODEX_HANDOFF.md](../CODEX_HANDOFF.md)
 
-Render และ GitHub Pages ใช้งานร่วมกันแล้ว ยังไม่ทดสอบกรณีผิดพลาดออนไลน์ครบ ไม่เปิด flow อื่นเขียนจริง และไม่เปลี่ยนเป้าหมายเป็นชีตหลัก
+อัปเดต 6 พ.ย.: เพิ่มฟอร์ม edit ผ่านเส้นทางออนไลน์แล้วทั้งชื่อ MAIN, เมจอย่างเดียว, ชื่อพร้อมเมจ และชื่อตัวรอง พร้อมปฏิเสธค่าซ้ำเดิมและเมจที่มีสิทธิ์ล็อก รายละเอียดใน docs/admin-test-matrix.md ยังไม่เปิด flow อื่นหรือเปลี่ยนเป้าหมายเป็นชีตหลัก และกรณี edit ที่ต้องยกเลิก/พักนับสิทธิ์ยังรอเชื่อม flow ล็อก
 
 ## ไฟล์ที่ใช้
 
@@ -38,7 +38,7 @@ Render และ GitHub Pages ใช้งานร่วมกันแล้�
 3. Render ตรวจ session ทุกคำสั่ง bootstrap / preview / commit ตรวจ exact Origin ที่อนุญาตและใช้ JSON ไม่ใช้ cookie ข้ามไซต์
 4. Render ลงลายเซ็น HMAC-SHA256 ด้วย secret จาก environment ส่ง nonce, เวลา, บัญชี Admin และ owner hash ของเซสชันไป Apps Script; Apps Script ตรวจลายเซ็นและอายุคำขอก่อนอ่านข้อมูล owner hash ใช้ตรวจสิทธิ์คำขอ ไม่ใช่ชื่อบุคคล
 5. อ่าน/สรุป/บันทึกจำกัดเฉพาะ spreadsheet ID ของสำเนาที่ตกลง ทุกคำสั่งเขียนคำนวณจากข้อมูลสดฝั่ง Apps Script ไม่รับ patches จาก browser ไปเขียนทันที
-6. Live mode เปิดเฉพาะ register งานอื่นถูกปฏิเสธทั้ง Render และ Apps Script ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว
+6. Live mode เปิด register และ edit งานอื่นถูกปฏิเสธทั้ง Render และ Apps Script ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว
 
 ## การยืนยันบันทึก
 
