@@ -12,6 +12,8 @@
 - ผู้ดูแลยืนยันกติกาใหม่: Inactive ให้ Post Check/Activity Check/Reclaim Approved FALSE ทั้งหมดและยกเลิกสิทธิ์ล็อกที่เกี่ยวข้อง; ต่อหลังหมดอายุ LockID ใหม่เริ่มวันอนุมัติ; ไม่เก็บ extra-sub permission แยก คุยตกลงก่อนกรอกฟอร์มแล้ว; MAIN ใหม่เก็บลิงก์ใหม่ ตัวเดิมคงลิงก์เดิม; ล็อกเมจที่ใช้อยู่พักนับวันอนุมัติทันที; ตัวพักนับเปลี่ยนเมจให้ยกเลิกสิทธิ์เดิมได้เลย แก้ admin-flow.md แล้ว
 - งานค้างของกติกาล็อกคืออ่านชื่อ Type native ที่สูตร/validation รองรับก่อนเขียนเหตุการณ์; edit ของตัวมีล็อกยังถูก block ไว้เพราะโค้ดเหตุการณ์ล็อกยังไม่เสร็จ ไม่ใช่เพราะผู้ดูแลยังไม่ตอบกติกา
 - ไฟล์เก่า untracked admin-model.test.cjs / tools/export-admin-sample.py / HTMLไทย ยังไม่รวมเป็นงานรอบนี้
+- ชุดนี้ commit/push แล้วที่ `3ada766` สำรอง Code เดิมผ่าน editor เป็น local-delivery/Code-before-edit-20261106.gs แล้ววาง bundle ที่ตรวจเทียบเนื้อหาตรงกันและ deploy Apps Script เวอร์ชัน6 สำเร็จ `/exec` เดิม ภาพ local-delivery/apps-script-deployed-edit-20261106.jpg โปรเจกต์ bound ที่ยืนยันลิงก์ชีตสำเนาแล้ว: https://script.google.com/u/1/home/projects/1pqjTeN1jl3dF8cUqcE8rkSrV4TIus_4UlO1IO3fOfqT9IvKahN-A-i7O/edit ไม่แก้ properties หรือ manifest Render service srv-dbmb2k1srm7s73fjtpug trigger manual deploy3ada766 แล้ว (รอผล Live/ทดสอบออนไลน์ตอนบันทึกบรรทัดนี้)
+- ตรวจ native dropdown log เฟซเคลมล็อก!H2 แล้วมี เริ่มล็อก / ต่ออายุ / พักนับ / เริ่มนับต่อ / ยกเลิก และ Faceclaim Locks!F2 ใช้สถานะ ยกเลิก รองรับใน SWITCH; ยังต้องอ่านสูตรคำนวณ log คอลัมน์ L:Q ที่ซ่อนอยู่ก่อนพัฒนา lock transactions ไม่อ้างว่าเห็นสูตรซ่อนครบแล้ว
 
 1. `git status --short --branch` ก่อน แล้ว `git pull --ff-only origin main` เมื่อไม่มีการแก้ไขที่ชนกัน ห้าม reset ทับงานของอีกเครื่อง
 2. อ่านไฟล์นี้ ตามด้วย `docs/admin-flow.md`, `docs/apps-script-plan.md`, `docs/render-setup.md`

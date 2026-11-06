@@ -5,8 +5,8 @@ function previewCharacterEditInCopy_(input) {
   var snapshot = registrationSnapshot_(book);
   // Required fields must still be read through the strict formula-error reader.
   [['Users', ['UserID', 'Username']], ['Characters', ['UserID', 'CharID', 'Character Name', 'Character Slot', 'Character Faceclaim']],
-    ['Player', ['UserID', 'Display Name']], ['NPC', ['UserID', 'Faceclaim']],
-    ['Public Faceclaim Locks', ['UserID', 'CharID', 'Lock Face Claim', 'Status', 'End Date']]]
+    ['Player', ['UserID', 'Display Name']], ['NPC', ['UserID', 'Display Name', 'Faceclaim']],
+    ['Public Faceclaim Locks', ['UserID', 'Lock Character Name', 'Lock Face Claim', 'End Date', 'CharID', 'LockID', 'Status']]]
     .forEach(function (definition) { readPreviewTable_(book, definition[0], definition[1]); });
   return planCharacterEdit_(input, snapshot, Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd'));
 }

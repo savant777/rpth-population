@@ -50,6 +50,28 @@ test('main rename edits only names, retains identity/link/flags and logs same sl
   assert.equal(JSON.stringify(f.snapshot), before);
 });
 
+test('copy preview reads contiguous native header prefixes and rejects required formula errors', () => {
+  const f = fixture();
+  const book = { getSheetByName: name => {
+    const table = f.snapshot.find(t => t.name === name);
+    return {
+      getMaxColumns: () => table.values[0].length,
+      getLastRow: () => table.values.length,
+      getRange: (row, column, height, width) => ({
+        getDisplayValues: () => table.values.slice(row - 1, row - 1 + height).map(r => r.slice(column - 1, column - 1 + width).map(String)),
+        getValues: () => table.values.slice(row - 1, row - 1 + height).map(r => r.slice(column - 1, column - 1 + width))
+      })
+    };
+  } };
+  Object.assign(f.context, {
+    adminTestBook_: () => book, inspectCopyStructure_: () => ({ headersMatch: true, timezone: 'Asia/Bangkok' }),
+    registrationSnapshot_: () => f.snapshot, Utilities: { formatDate: () => '2026-11-06' }
+  });
+  assert.equal(f.context.previewCharacterEditInCopy_({ ...f.input, name: 'New Main' }).errors.length, 0);
+  f.snapshot[4].values[1][2] = '#REF!';
+  assert.throws(() => f.context.previewCharacterEditInCopy_({ ...f.input, name: 'New Main' }), /NPC.*Faceclaim/);
+});
+
 test('sub rename and main face change touch Characters and log only; combined type follows actual changes', () => {
   const f = fixture();
   for (const values of [{ charId: 'C-42-02', name: 'New Sub' }, { faceclaim: 'New Face' }]) {
