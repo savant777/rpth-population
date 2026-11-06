@@ -52,7 +52,7 @@
       if(action==="reclaim") body+=section(3,"ผลการยื่นเฟซเคลมหลุด",select("result","ผลพิจารณา",[["approved","ผ่าน"],["rejected","ไม่ผ่าน · บันทึกเฉพาะ log"]],{required:true})+field("oldFace","เฟซเคลมเก่า",{required:true,placeholder:"เมจเดิมก่อนถูกถอน"})+field("name","ชื่อใหม่",{placeholder:"เว้นว่างเพื่อใช้ชื่อเดิม"})+field("faceclaim","เฟซเคลมใหม่",{placeholder:"เว้นว่างเพื่อใช้เมจเดิม"})+`<div id="approvalFields" class="field-grid wide">${field("approvedDate","วันที่อนุมัติผ่าน",{type:"date",required:true,value:today()})+field("postUrl","ลิงก์โพสต์ที่ยื่น",{type:"url",placeholder:"ใช้เป็น Note ใน log Admin"})}</div>`+note("log ลงทะเบียนใช้วันที่ลงฟอร์ม · log Admin ใช้วันที่อนุมัติผ่าน · ไม่ใช้ลิงก์ประวัติตัวละคร"));
       if(action==="lock") body+=section(3,"สิทธิ์คุ้มครอง",select("lockMode","ประเภทรายการ",[["start","เริ่มล็อกใหม่"],["renew","ต่ออายุสิทธิ์เดิม"]],{required:true,wide:true})+`<div id="lockFaceField" class="wide">${field("faceclaim","เฟซเคลมที่ต้องการล็อก",{required:true,placeholder:"เฟซเคลมของตัวละครนี้"})}</div><div id="existingLockField" class="wide" hidden>${select("lockId","สิทธิ์เดิม",[["","เลือกตัวละครก่อน"]],{wide:true})}</div>`+select("payment","รูปแบบชำระที่ตรวจแล้ว",[["monthly","รายเดือน · 3,000 ต่อเดือน"],["year","เหมาจ่าย · 30,000 / 12 เดือน"]],{required:true})+`<div id="monthField">${field("months","จำนวนเดือน",{type:"number",required:true,value:"1",min:"1",step:"1"})}</div>`+note("ไม่เกิน 2 สิทธิ์ รวมรายการพักนับ · สิทธิ์ผูกกับ CharID · ไม่มีการรับเงินในหน้านี้"));
     }
-    if(!["inactive"].includes(action)) body+=section(action==="register"||action==="npc"?3:4,"หมายเหตุ",field("note","หมายเหตุเพิ่มเติม",{wide:true,html:'<textarea name="note" id="note" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม ถ้ามี"></textarea>'}));
+    if(!["inactive","npc","race"].includes(action)) body+=section(action==="register"||action==="npc"?3:4,"หมายเหตุ",field("note","หมายเหตุเพิ่มเติม",{wide:true,html:'<textarea name="note" id="note" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม ถ้ามี"></textarea>'}));
     $("formFields").innerHTML=meta+body;
     $("formErrors").hidden=true;
     restoreDraft();updateDynamic();renderContext();
@@ -68,8 +68,8 @@
       if(["switch","lock"].includes(action)&&$("faceclaim"))$("faceclaim").value="";
       if(action==="reclaim"&&$("oldFace"))$("oldFace").value="";
     }
-    const p=selectedPlayer(),chars=M.validChars(p),current=action==="edit"?M.editableChar(p):M.activeChar(p);
-    const list=action==="edit"?(current?[current]:[]):action==="switch"?chars.filter(c=>c.id!==current?.id):chars;
+    const p=selectedPlayer(),chars=M.validChars(p),current=["edit","race"].includes(action)?M.editableChar(p):M.activeChar(p);
+    const list=["edit","race"].includes(action)?(current?[current]:[]):action==="switch"?chars.filter(c=>c.id!==current?.id):chars;
     setOptions($("charId"),[["","เลือกตัวละคร"],...list.map(c=>[c.id,`${c.name} · ${c.slot}`])]);
     if($("charId")&&!$("charId").value && action!=="switch" && current)$("charId").value=current.id;
     setOptions($("replaceId"),[["","ไม่แทนที่ · ใช้สลอตว่างก่อน"],...chars.filter(c=>c.slot!=="MAIN").map(c=>[c.id,`${c.name} · ${c.slot}`])]);
@@ -104,7 +104,7 @@
         $(`${key}-picker`).value=M.parseInputDate(el.value);
       }else el.value=value;
     }
-    if($("account"))updateAccount();for(const key of ["charId","lockId","replaceId"]){const el=$(key);if(el&&draft[key]&&!(action==="edit"&&key==="charId"))el.value=draft[key];}updateLocks();if($("lockId")&&draft.lockId)$("lockId").value=draft.lockId;$("draftStatus").textContent="กู้คืนแบบร่างในเบราว์เซอร์นี้แล้ว";
+    if($("account"))updateAccount();for(const key of ["charId","lockId","replaceId"]){const el=$(key);if(el&&draft[key]&&!(["edit","race"].includes(action)&&key==="charId"))el.value=draft[key];}updateLocks();if($("lockId")&&draft.lockId)$("lockId").value=draft.lockId;$("draftStatus").textContent="กู้คืนแบบร่างในเบราว์เซอร์นี้แล้ว";
   }
   function setStep(step){["stepForm","stepReview","stepDone"].forEach((id,i)=>$(id).classList.toggle("current",i===step-1));}
   function showErrors(errors){$("formErrors").classList.remove("success");$("formErrors").innerHTML=`<ul>${errors.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;$("formErrors").hidden=false;$("formErrors").scrollIntoView({behavior:"smooth",block:"center"});}

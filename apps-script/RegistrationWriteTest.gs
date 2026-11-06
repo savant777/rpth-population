@@ -56,7 +56,7 @@ function commitRegistrationWriteTest(request) {
     var result = buildRegistrationBatch_(plan, snapshot);
     receipt = { mode: 'TEST_COPY_COMMITTED', requestId: request.requestId, owner: state.owner,
       operator: state.operator, committedAt: new Date().toISOString(),
-      uid: plan.uid || plan.changes[0].fields.UserID, charId: plan.charId || plan.changes[1].fields.CharID,
+      uid: plan.uid || plan.changes[0].fields.UserID, charId: plan.charId || (plan.changes[1] && plan.changes[1].fields.CharID) || '',
       action: state.action || 'register', rows: result.rows, note: 'บันทึกครบ ' + Object.keys(result.rows).length + ' ชีตในสำเนาทดสอบแล้ว' };
     result.requests.push({ createDeveloperMetadata: { developerMetadata: {
       // Stable unique-ID constraint makes a duplicate batch fail atomically,
@@ -80,8 +80,8 @@ function assertTestOperator_(operator) {
 function registrationVerifiedReceipt_(book, receipt) {
   var result = JSON.parse(JSON.stringify(receipt));
   try {
-    var widths = { Users: 'D', Characters: 'G', Player: 'W', 'log ลงทะเบียนตัวละคร': 'M' };
-    var formulaColumns = { Users: [3], Characters: [], Player: [3, 5, 6, 8, 9, 11, 15, 16, 18, 19, 20, 21], 'log ลงทะเบียนตัวละคร': [11] };
+    var widths = { Users: 'D', Characters: 'G', Player: 'W', NPC: 'E', 'log ลงทะเบียนตัวละคร': 'M' };
+    var formulaColumns = { Users: [3], Characters: [], NPC: [], Player: [3, 5, 6, 8, 9, 11, 15, 16, 18, 19, 20, 21], 'log ลงทะเบียนตัวละคร': [11] };
     var names = Object.keys(receipt.rows);
     var ranges = names.map(function (name) { var row = receipt.rows[name]; return "'" + name + "'!A" + row + ':' + widths[name] + row; });
     var formulas = Sheets.Spreadsheets.Values.batchGet(book.getId(), { ranges: ranges, valueRenderOption: 'FORMULA' }).valueRanges;
@@ -128,16 +128,17 @@ function registrationSnapshot_(book) {
 }
 
 function buildRegistrationBatch_(plan, snapshot) {
-  if (plan.errors.length || (plan.action !== 'edit' && plan.changes.length !== 4) || (plan.action === 'edit' && plan.changes.length < 2)) throw new Error('แผนบันทึกไม่ครบ 4 ชีตหรือไม่ถูกต้อง');
+  var kind = plan.action || 'register', counts = { register: [4], edit: [2, 4], npc: [1], race: [2] };
+  if (plan.errors.length || !counts[kind] || counts[kind].indexOf(plan.changes.length) < 0) throw new Error('แผนบันทึกไม่ครบ 4 ชีตหรือไม่ถูกต้อง');
   var requests = [], rows = {};
-  var formulaColumns = { Users: [3], Characters: [], Player: [3, 5, 6, 8, 9, 11, 15, 16, 18, 19, 20, 21], 'log ลงทะเบียนตัวละคร': [11] };
+  var formulaColumns = { Users: [3], Characters: [], NPC: [], Player: [3, 5, 6, 8, 9, 11, 15, 16, 18, 19, 20, 21], 'log ลงทะเบียนตัวละคร': [11] };
   plan.changes.forEach(function (change) {
     var table = snapshot.filter(function (item) { return item.name === change.sheet; })[0];
     if (!table) throw new Error('ไม่พบตาราง ' + change.sheet);
     var headers = table.values[0], width = headers.length, end = 1;
     if (change.row != null) {
-      var allowed = { Characters: ['Character Name', 'Character Faceclaim'], Users: ['Username'], Player: ['Display Name'] };
-      if (plan.action !== 'edit' || !Number.isInteger(change.row) || change.row < 2 || change.row > table.values.length || change.row > 10000 || !allowed[change.sheet]) throw new Error('แถวแก้ไขไม่ถูกต้อง');
+      var allowed = kind === 'race' ? { Player: ['Race'] } : { Characters: ['Character Name', 'Character Faceclaim'], Users: ['Username'], Player: ['Display Name'] };
+      if (['edit', 'race'].indexOf(kind) < 0 || !Number.isInteger(change.row) || change.row < 2 || change.row > table.values.length || change.row > 10000 || !allowed[change.sheet]) throw new Error('แถวแก้ไขไม่ถูกต้อง');
       if (String(table.values[change.row - 1][0]).replace(/^0+(?=\d)/, '') !== plan.uid) throw new Error('UID ของแถวแก้ไขไม่ตรงกัน');
       if (change.sheet === 'Characters' && table.values[change.row - 1][1] !== plan.charId) throw new Error('CharID ของแถวแก้ไขไม่ตรงกัน');
       rows[change.sheet] = change.row;
@@ -148,6 +149,7 @@ function buildRegistrationBatch_(plan, snapshot) {
       });
       return;
     }
+    if ((kind === 'npc' && change.sheet !== 'NPC') || (kind === 'race' && change.sheet !== 'log ลงทะเบียนตัวละคร') || (kind !== 'npc' && change.sheet === 'NPC')) throw new Error('ชีตปลายทางไม่ตรงประเภทงาน');
     for (var i = 1; i < table.values.length; i++) {
       if (table.values[i].some(function (v) { return v !== '' && v !== null; }) || table.formulas[i].some(Boolean)) end = i + 1;
     }
@@ -163,7 +165,7 @@ function buildRegistrationBatch_(plan, snapshot) {
       if (column < 0 || formulaColumns[change.sheet].indexOf(column) >= 0 || (change.sheet === 'Player' && column === 7)) throw new Error('ห้ามเขียนช่องสูตรหรือช่องที่ไม่รู้จัก: ' + field);
       var value = change.fields[field], entered;
       if (field === 'Effective Date') entered = { numberValue: (Date.parse(value + 'T00:00:00Z') - Date.UTC(1899, 11, 30)) / 86400000 };
-      else if (field === 'UserID' || field === 'logID (#Post)') entered = { numberValue: Number(value) };
+      else if (field === 'logID (#Post)' || (field === 'UserID' && /^[0-9]+$/.test(String(value)))) entered = { numberValue: Number(value) };
       else if (typeof value === 'boolean') entered = { boolValue: value };
       else entered = { stringValue: String(value) }; // Literal strings, including text beginning '='.
       requests.push({ updateCells: { start: { sheetId: table.sheetId, rowIndex: row, columnIndex: column }, rows: [{ values: [{ userEnteredValue: entered }] }], fields: 'userEnteredValue' } });

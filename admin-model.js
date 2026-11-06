@@ -169,6 +169,7 @@
       }
     }
     if(action==="race" && target) {
+      if(editableChar(player)?.id!==target.id) errors.push("กรุณาเลือกตัวละครที่กำลังใช้งาน");
       requireField("race","เผ่าพันธุ์ใหม่");if(f.race===player.race) errors.push("เผ่าพันธุ์ใหม่ตรงกับข้อมูลเดิม");
       add("Player","เปลี่ยนเผ่าพันธุ์",{UserID:f.uid,Race:f.race});regLog("เปลี่ยนเผ่าพันธุ์",target,null,target.slot,target.slot,false,{Note:`${player.race} > ${f.race}`});
     }

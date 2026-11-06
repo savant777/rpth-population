@@ -26,8 +26,10 @@ test('hosted API enforces exact CORS origin and sessions for every gateway comma
   assert.equal((await post('preview', { action: 'inactive' }, token)).status, 400);
   assert.equal((await post('preview', { action: 'register', operator: 'forged-person', values: {} }, token)).status, 200);
   assert.equal((await post('preview', { action: 'edit', values: {} }, token)).status, 200);
+  assert.equal((await post('preview', { action: 'npc', values: {} }, token)).status, 200);
+  assert.equal((await post('preview', { action: 'race', values: {} }, token)).status, 200);
   assert.equal((await post('commit', { requestId: 'example', owner: 'fabricated' }, token)).status, 200);
-  assert.deepEqual(calls.map(call => call.command), ['bootstrap', 'preview', 'preview', 'commit']);
+  assert.deepEqual(calls.map(call => call.command), ['bootstrap', 'preview', 'preview', 'preview', 'preview', 'commit']);
   assert.ok(calls.every(call => call.session.operator === 'Admin' && /^[a-f0-9]{64}$/.test(call.session.owner)));
   await post('logout', {}, token);
   assert.equal((await post('commit', {}, token)).status, 401);

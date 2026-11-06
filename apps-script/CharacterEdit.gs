@@ -84,5 +84,6 @@ function planCharacterEdit_(input, snapshot, today) {
 function previewRegistryAction_(input, action) {
   if (!action || action === 'register') return previewNewPlayerInCopy(input);
   if (action === 'edit') return previewCharacterEditInCopy_(input);
+  if (action === 'npc' || action === 'race') return previewOtherRegistryForm_(input, action);
   throw new Error('ฟอร์มนี้ยังไม่รองรับการบันทึก');
 }
