@@ -33,13 +33,18 @@ test('NPC allocates the next unused letter, writes one sheet and preserves lette
 });
 test('NPC rejects duplicates, used faces, paused rights, bad inputs and exhausted a-z',()=>{
   const f=fixture();
-  for(const values of [{name:'Existing NPC'},{faceclaim:' USED FACE '},{faceclaim:'NPC Face'},{faceclaim:'Locked Face'},{race:'unlisted'},{hasAccount:'yes',uid:'0'},{url:'javascript:alert(1)'},{hasAccount:'unknown'},{date:'31/02/2026'},{name:'x'.repeat(2001)}]){
+  f.snapshot[1].values.push([99,'C-99-01','Staff','MAIN','Staff Face','',true]);
+  for(const values of [{name:'Existing NPC'},{faceclaim:' USED FACE '},{faceclaim:'Staff Face'},{faceclaim:'NPC Face'},{faceclaim:'Locked Face'},{race:'unlisted'},{hasAccount:'yes',uid:'0'},{url:'javascript:alert(1)'},{hasAccount:'unknown'},{date:'31/02/2026'},{name:'x'.repeat(2001)}]){
     const p=f.plan('npc',values);assert.ok(p.errors.length,JSON.stringify(values));assert.equal(p.changes.length,0);
   }
   const users=f.snapshot[0];
   for(let i=98;i<=122;i++)users.values.push([String.fromCharCode(i),'','','']);
   assert.ok(f.plan('npc').errors.some(e=>e.includes('a–z')));
   assert.throws(()=>f.plan('npc',{name:123}),/ชนิดข้อมูล/);
+  for(const [status,end,blocked] of [['กำลังนับ','2026-11-05',false],['กำลังนับ','2026-11-06',true],['กำลังนับ','',true],['หมดอายุ','',false]]){
+    const g=fixture();g.snapshot[5].values[1][3]=end;g.snapshot[5].values[1][6]=status;
+    assert.equal(g.plan('npc',{faceclaim:'Locked Face'}).errors.length>0,blocked,`${status} ${end}`);
+  }
 });
 test('race changes Player Race and log only, derives old facts from the current character and uses FALSE',()=>{
   const f=fixture(),p=f.plan('race');assert.equal(p.errors.length,0);

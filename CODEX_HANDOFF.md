@@ -4,9 +4,13 @@
 
 ## เริ่มที่นี่
 
-### งานฟอร์ม NPC / เปลี่ยนเผ่าพันธุ์ที่กำลังทำ
+### ฟอร์ม NPC / เปลี่ยนเผ่าพันธุ์ — พร้อมส่งตรวจบนสำเนา
 
-เพิ่ม OtherRegistryForms.gs และ shared transaction รองรับ npc/race แล้ว tests71/71 (56 tracked +15 เฉพาะเครื่อง) builder32functions ฟอร์ม NPC ไม่มีบัญชีเลือก a–z ไม่ซ้ำทุกทะเบียน มีบัญชีเก็บ UID จริง เพิ่มเฉพาะNPC; race ยึดตัวที่ใช้อยู่ เปลี่ยนPlayer Race +log Noteเก่า>ใหม่ From=To/AffectsUsageFALSE ไม่ใช้ลิงก์/หมายเหตุเพิ่มเติม จึงซ่อนช่องหมายเหตุที่ไม่มีปลายทางบันทึกในสองฟอร์มนี้ ยังต้อง deploy/ทดสอบออนไลน์ก่อนประกาศพร้อม ตรวจ Public NPC โดยเฉพาะ UIDตัวอักษรว่ารอดจากสูตร QUERY ชนิดข้อมูลผสมจริง ไม่เดาว่าสูตรรองรับ
+เพิ่ม OtherRegistryForms.gs และ shared transaction รองรับ npc/race แล้ว tests71/71 (56 tracked +15 เฉพาะเครื่อง) builder32functions ฟอร์ม NPC ไม่มีบัญชีเลือก a–z ไม่ซ้ำทุกทะเบียน มีบัญชีเก็บ UID จริง เพิ่มเฉพาะNPC; race ยึดตัวที่ใช้อยู่ เปลี่ยนPlayer Race +log Noteเก่า>ใหม่ From=To/AffectsUsageFALSE ไม่ใช้ลิงก์/หมายเหตุเพิ่มเติม จึงซ่อนช่องหมายเหตุที่ไม่มีปลายทางบันทึกในสองฟอร์มนี้ ทดสอบออนไลน์แล้วทั้งNPCรหัสa/UID99061121, UID/ชื่อ/เมจซ้ำ, allocator b previewแล้วcancel, raceไปแฟรี่และกลับมนุษย์, raceซ้ำถูกปฏิเสธ พร้อมตรวจทีละฟอร์มบนสำเนา ยังไม่ประกาศพร้อมทั้งระบบ
+
+รอบนี้ commit61577cb: Render deploy Live สำเร็จ26.8s / AppsScriptเวอร์ชัน9 deployสำเร็จ URLเดิม โค้ดสำรอง local-delivery/Code-before-npc-race.gs ไม่มีการแก้ properties หรือ manifest ผู้ดูแลกำลัง login admin ใหม่หลัง restart ก่อนทดสอบออนไลน์ อ่าน native Public NPC!A1 แล้วใช้ FILTER(NPC!A2:E,NPC!A2:A<>"") มีหัวคอลัมน์5ช่อง ไม่ใช่ QUERY จึงไม่แก้สูตรใด ๆ ยังต้องตรวจแถว QA หลังเพิ่มจริง
+
+ผลออนไลน์เสร็จแล้ว: NPC49(a) /50(99061121), Player296+log1166/1167 ทั้ง4ใบรับตรวจผ่าน อ่านค่าจริงในPublicNPCและPublicPlayerแล้ว ลิงก์ว่าง/ตัวอักษรไม่หาย ไม่เพิ่มUsers/Characters/logจากNPC; raceคงข้อมูลอื่นและคืนQAเป็นมนุษย์แล้ว log1168ว่าง ภาพและrequestIdsในdocs/admin-test-matrix.md UIใหม่แสดงเมนู4ฟอร์มและedit/raceเลือกเฉพาะตัวปัจจุบันได้แล้ว ล้างdraftNPC/raceเพื่อไม่ให้ผู้ดูแลเผลอบันทึกค่าทดสอบเพิ่ม เก็บแถวQAเป็นหลักฐาน จุดUIเพิ่มรวม9รายการไว้แก้ท้ายสุด
 
 **กติกาแก้ไขล่าสุดหลังผู้ดูแลพักแล้วกลับมาทำต่อ:** edit ชื่อ/เมจได้เฉพาะตัวที่กำลังใช้งาน ต้องสลับใช้งานก่อนแก้ตัวอื่น การทดสอบออนไลน์เดิมที่แก้ชื่อตัวรองขณะใช้ MAIN ไม่ใช่เคสที่อนุญาตและไม่ใช่หลักฐานความถูกต้องของกติกาใหม่นี้ ปรับ server ให้ตรวจ active flag หนึ่งตัวและตรง Player active slot, UI จำกัดตัวเลือกและไม่กู้ CharID ตัวอื่นจาก draft, demo model ใช้กติกาเดียวกันแล้ว ต้อง deploy bundle/UI ใหม่ก่อนถือว่าออนไลน์บังคับกติกานี้
 
@@ -54,7 +58,7 @@
 
 ### ยังไม่พร้อมเปิดเต็มระบบ
 
-- **เขียนได้ register และ edit บนชีตสำเนา** กรณี edit ต้องยกเลิก/พักนับล็อกยังถูกปิดไว้เพื่อรอเชื่อม flow ล็อก ไม่ได้เปิดชีตหลัก เมนูอื่นยังไม่มี backend
+- **เขียนได้ register / edit / npc / race บนชีตสำเนา** กรณี edit ต้องยกเลิก/พักนับล็อกยังถูกปิดไว้เพื่อรอเชื่อม flow ล็อก ไม่ได้เปิดชีตหลัก เมนูอื่นยังไม่มี backend
 - การทดสอบออนไลน์กรณีข้อมูลซ้ำ/สองคำขอพร้อมกัน/สรุปเก่า/เน็ตขาด ยังไม่ครบ แม้มี automated tests ในเครื่องแล้ว
 - ยังไม่ได้ทำระบบ sync/deploy Apps Script อัตโนมัติ ขณะนี้มี builder รวมไฟล์ลดขั้นคัดลอกด้วยมือ
 - Render ใช้ process เดียว memory sessions/rate limit; restart/redeploy ทำให้ login ใหม่ ไม่รองรับหลาย instance
@@ -104,7 +108,7 @@ npm run build:apps-script
 
 build ต้องสำเร็จ จะได้ `local-delivery/Code.gs`, `local-delivery/appsscript.json`, `local-delivery/INSTALL.txt` อิง path ของ script ไม่ขึ้นกับ cwd และตรวจ syntax/ชื่อฟังก์ชันซ้ำก่อนเขียนไฟล์
 
-Source ทั้ง 5 ไฟล์ (รวม CharacterEdit.gs) ถูกวางรวมใน **Code.gs ไฟล์เดียว** ใน Apps Script โปรเจกต์ที่ผู้ดูแลใช้อยู่ อย่าสั่งให้เพิ่ม source แยกซ้ำอีก ในโปรเจกต์จริงไฟล์ Code แสดงชื่อไทยว่า รหัส.gs และมี DiagnoseGateway.gs กับ manifest อยู่เดิม
+Source ทั้ง 6 ไฟล์ (รวม CharacterEdit.gs / OtherRegistryForms.gs) ถูกวางรวมใน **Code.gs ไฟล์เดียว** ใน Apps Script โปรเจกต์ที่ผู้ดูแลใช้อยู่ อย่าสั่งให้เพิ่ม source แยกซ้ำอีก ในโปรเจกต์จริงไฟล์ Code แสดงชื่อไทยว่า รหัส.gs และมี DiagnoseGateway.gs กับ manifest อยู่เดิม
 
 ผลตรวจรอบส่งมอบนี้: Node v22.17.0, `npm test` ผ่าน 36/36 รายการ, `npm run build:apps-script` สำเร็จ ตรวจ syntax ของ Code.gs และชื่อฟังก์ชันไม่ซ้ำครบ 27 ฟังก์ชัน ไม่มีการเขียนชีตหรือ redeploy บริการออนไลน์ระหว่างจัดส่งมอบ
 

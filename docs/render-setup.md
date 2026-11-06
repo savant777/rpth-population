@@ -49,7 +49,7 @@ push ไฟล์หน้าเว็บแล้วเปิด admin.html จ
 
 รัน local ด้วย `npm run dev` แล้วเปิด `http://127.0.0.1:4173/admin.html` ได้โดยไม่ต้องแก้ admin-config.js: dev server ส่ง config ที่ใช้ API origin เดียวกันเฉพาะตอนเสิร์ฟไฟล์ ส่วนไฟล์จริงสำหรับ GitHub Pages ยังคงชี้ Render ไม่มีการเพิ่ม localhost เข้า CORS ของ Render ตั้ง `RPTH_ADMIN_PASSWORD_HASH` ใน environment ของ terminal ก่อนเริ่ม server; หากไม่ตั้ง gateway environment จะเป็น local-demo หากตั้ง URL/secret ของ gateway จะเชื่อมชีตสำเนาเดิมผ่าน server ฝั่ง local (ไม่ตั้ง NODE_ENV=production สำหรับ dev) ไม่ใส่ค่าลับในไฟล์ frontend
 
-- Live UI เปิด register และ edit; flow อื่นยังถูกปฏิเสธฝั่ง Node และ Apps Script ฟอร์ม edit กรณีเปลี่ยนเมจที่เกี่ยวกับสิทธิ์ล็อกยังปิดไว้จนเชื่อมเหตุการณ์ยกเลิก/พักนับครบ
+- Live UI เปิด register / edit / npc / race; flow อื่นยังถูกปฏิเสธฝั่ง Node และ Apps Script ฟอร์ม edit กรณีเปลี่ยนเมจที่เกี่ยวกับสิทธิ์ล็อกยังปิดไว้จนเชื่อมเหตุการณ์ยกเลิก/พักนับครบ
 - Live mode ไม่มี fallback ไป sample/model ฝั่ง client ถ้า API ล้มเหลว
 - Node ออก opaque bearer token 32 bytes อายุ 8 ชั่วโมง เก็บ digest ใน memory; browser เก็บ token ในตัวแปร memory เท่านั้น ไม่ใช้ localStorage/sessionStorage หรือ cookie ข้ามไซต์ จึงต้อง login ใหม่เมื่อ reload หน้า
 - Local demo ยังคง cookie HttpOnly / SameSite=Strict เช่นเดิม

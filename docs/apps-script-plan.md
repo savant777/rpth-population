@@ -1,6 +1,6 @@
 # ระบบ admin และแผนเชื่อม Apps Script
 
-อัปเดต 5 พฤศจิกายน 2026 กติกางานทั้งหมดอยู่ใน [admin-flow.md](admin-flow.md) วิธีติดตั้งอยู่ใน [render-setup.md](render-setup.md)
+อัปเดต 6 พฤศจิกายน 2026 กติกางานทั้งหมดอยู่ใน [admin-flow.md](admin-flow.md) วิธีติดตั้งอยู่ใน [render-setup.md](render-setup.md)
 
 ## สถานะที่ยืนยันแล้ว
 
@@ -8,7 +8,7 @@
 
 ผู้ดูแล deploy WebGateway แล้ว และยืนยัน login/อ่านข้อมูล/ลงทะเบียนใหม่ผ่าน GitHub Pages → Render → Apps Script → สำเนาครบ 4 ชีต ผลตรวจอ่านกลับผ่าน ดูหลักฐานและงานค้างล่าสุดใน [CODEX_HANDOFF.md](../CODEX_HANDOFF.md)
 
-อัปเดต 6 พ.ย.: เพิ่มฟอร์ม edit ผ่านเส้นทางออนไลน์แล้วทั้งชื่อ MAIN, เมจอย่างเดียว, ชื่อพร้อมเมจ และชื่อตัวรอง พร้อมปฏิเสธค่าซ้ำเดิมและเมจที่มีสิทธิ์ล็อก รายละเอียดใน docs/admin-test-matrix.md ยังไม่เปิด flow อื่นหรือเปลี่ยนเป้าหมายเป็นชีตหลัก และกรณี edit ที่ต้องยกเลิก/พักนับสิทธิ์ยังรอเชื่อม flow ล็อก
+อัปเดต 6 พ.ย.: เปิด register/edit/npc/race บนสำเนาเดิมแล้ว NPC ทั้ง UIDตัวเลขและตัวอักษรผ่านออนไลน์พร้อม PublicNPC; race ผ่าน Player/log/PublicPlayer และคืนค่า QA เดิมแล้ว edit บังคับเฉพาะตัวที่กำลังใช้งานทั้ง UI/server (การทดสอบเก่าที่แก้ตัวรองขณะใช้ MAIN ไม่ใช่เคสที่อนุญาต) รายละเอียดใน admin-test-matrix.md ยังไม่เปิด flow อื่นหรือเปลี่ยนเป็นชีตหลัก และ edit ที่ต้องยกเลิก/พักนับสิทธิ์ยังรอเชื่อม flow ล็อก
 
 ## ไฟล์ที่ใช้
 
@@ -24,6 +24,8 @@
 | Render | package.json / render.yaml | เปิดโปรเซสและตั้งค่าบริการ |
 | Apps Script | apps-script/InspectCopy.gs | ตรวจ ID สำเนาและ schema; วางเป็น Code.gs |
 | Apps Script | apps-script/RegistrationPreview.gs | อ่านข้อมูลสดและตรวจ flow ลงทะเบียนใหม่ |
+| Apps Script | apps-script/CharacterEdit.gs | ตรวจและเตรียมแก้ชื่อ/เมจเฉพาะตัวที่ใช้งาน |
+| Apps Script | apps-script/OtherRegistryForms.gs | ตรวจและเตรียมเพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ |
 | Apps Script | apps-script/RegistrationWriteTest.gs | เตรียม token, ตรวจสรุป, batch write และ receipt |
 | Apps Script | apps-script/WebGateway.gs | รับ POST ที่ลงลายเซ็นและอ่าน bootstrap |
 | Apps Script | apps-script/appsscript.json | เขตเวลา, Sheets v4 และ OAuth scopes |
@@ -38,7 +40,7 @@
 3. Render ตรวจ session ทุกคำสั่ง bootstrap / preview / commit ตรวจ exact Origin ที่อนุญาตและใช้ JSON ไม่ใช้ cookie ข้ามไซต์
 4. Render ลงลายเซ็น HMAC-SHA256 ด้วย secret จาก environment ส่ง nonce, เวลา, บัญชี Admin และ owner hash ของเซสชันไป Apps Script; Apps Script ตรวจลายเซ็นและอายุคำขอก่อนอ่านข้อมูล owner hash ใช้ตรวจสิทธิ์คำขอ ไม่ใช่ชื่อบุคคล
 5. อ่าน/สรุป/บันทึกจำกัดเฉพาะ spreadsheet ID ของสำเนาที่ตกลง ทุกคำสั่งเขียนคำนวณจากข้อมูลสดฝั่ง Apps Script ไม่รับ patches จาก browser ไปเขียนทันที
-6. Live mode เปิด register และ edit งานอื่นถูกปฏิเสธทั้ง Render และ Apps Script ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว
+6. Live mode เปิด register / edit / npc / race งานอื่นถูกปฏิเสธทั้ง Render และ Apps Script ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว
 
 ## การยืนยันบันทึก
 

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 1 | ลงทะเบียนผู้เล่นใหม่ | ออนไลน์สำเร็จและกรณี validation บางส่วนแล้ว; robustness ยังไม่ครบ |
 | 2 | เปลี่ยนชื่อ/เฟซเคลม | deploy/ทดสอบออนไลน์กรณีปกติแล้ว พร้อมให้ตรวจ; การเชื่อมล็อกยังรอขั้น6 |
-| 3 | เพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ | เพิ่ม server/shared transaction และ tests แล้ว รอ deploy/ทดสอบออนไลน์ |
+| 3 | เพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ | deploy และทดสอบออนไลน์แล้ว พร้อมให้ผู้ดูแลตรวจบนสำเนา |
 | 4 | เพิ่มตัวรอง / สลับตัวละคร | มี demo model; ต้องพัฒนา server และเชื่อมเหตุการณ์ล็อก |
 | 5 | เปลี่ยน MAIN | มี demo model; กติกาลิงก์/สิทธิ์พิเศษยืนยันแล้ว ต้องพัฒนา server |
 | 6 | ล็อก/ต่ออายุ/พักนับ/นับต่อ | มี demo model; พบ Type native แล้ว ต้องตรวจสูตรและพัฒนา server |
@@ -72,3 +72,24 @@ Local tests ครอบคลุม date/server validation, UID/CharID/face con
 พบ/แก้ header contract ของ readPreviewTable_ ซึ่งต้องเป็น prefix ต่อเนื่องจากคอลัมน์ A; เพิ่ม wrapper regression test ที่ใช้ reader จริงและตรวจ required formula errors แล้ว `npm test`63/63 (48 tracked +15 tests เก่าเฉพาะเครื่อง) bundle30functions ภาพหลักฐานใน local-delivery/qa-character-edit-20261106.jpg, qa-edit-log-20261106.jpg และ qa-edit-ready-20261106.jpg
 
 Dashboard สาธารณะชี้ข้อมูลเดิมของตัวเอง จึงไม่อ้างว่าข้อมูล QA ในสำเนาขึ้น dashboard หลัก การตรวจสำเนารอบนี้ยืนยันเฉพาะ Public Player ที่เชื่อมสำเนานี้ การทดสอบ rollover ปี2027 ต้องตรวจสูตร native โดยไม่เปลี่ยน header/วันระบบของชีตหลัก
+
+## หลักฐาน NPC / เปลี่ยนเผ่าพันธุ์ 6 พ.ย. 2026
+
+Deploy source61577cb: Render Live26.8s / AppsScript v9 /32functions ทดสอบผ่าน GitHub Pages → Render → สำเนาเดิม ทุกใบรับ verification.ok=true ไม่มี formulaErrors
+
+| เคส | requestId | แถวที่เขียน |
+| --- | --- | --- |
+| NPC ไม่มีบัญชี ลิงก์ว่าง รหัส a | d98ee3e3-046a-4f25-a710-fb6c89760f22 | NPC49 เท่านั้น |
+| NPC มี UID99061121 และลิงก์ | 38f0c6a7-94c2-4245-9aa2-f691150f6e6d | NPC50 เท่านั้น |
+| Race QA UID99061101 มนุษย์→แฟรี่ | 14c37dd3-de7a-4c84-934e-c85af464e8e7 | Player296 / log1166 |
+| คืน Race QA แฟรี่→มนุษย์ | f6724c94-0fde-4ab0-b1c6-8fb876e0260d | Player296 / log1167 |
+
+- อ่าน PublicNPC49:50 จริงแล้วพบทั้ง UIDตัวอักษร/ตัวเลขและข้อมูล5ช่องตรงกับ NPC ใช้ native FILTER ไม่ได้แก้สูตร Public ใด ๆ
+- NPC ซ้ำถูกปฏิเสธด้วย UID/ชื่อและเฟซเคลม ตรวจแถว51ว่าง allocatorเสนอ b สำหรับรายการถัดไปแม้ inputUIDเดิมยังอยู่ในช่องซ่อน แต่ยกเลิกสรุป b โดยไม่บันทึก ตรวจlog1166ว่างหลังเพิ่มNPCทั้งสองก่อนเริ่มrace ไม่สร้างlogสมัครจากNPC
+- Race เดิมซ้ำถูกปฏิเสธ ตรวจlog1167ว่างก่อนทำรายการคืนเผ่า จากนั้นอ่านlog1166:1168พบเพียง2รายการจริง Typeเปลี่ยนเผ่าพันธุ์ Noteเก่า>ใหม่ From=To MAIN/AffectsUsageFALSE/Active และแถว1168ว่าง
+- อ่าน Playerทั้ง23ช่อง, Characters406:407 และ PublicPlayer9ช่อง ก่อน/หลัง: เปลี่ยนเฉพาะRace คงชื่อ/เมจ/CharID/Slot/Active/ลิงก์/flags/usage/ค่าธรรมเนียม/ExemptUntil คืน QA เป็นมนุษย์แล้ว (MAIN1/SUB0/ExemptUntil06/02/2027)
+- UIใหม่ edit และ race เลือกได้เฉพาะ MAIN ที่ใช้อยู่ ไม่แสดง SUB1 ในตัวเลือก (ยังแสดงตัวรองในข้อมูลบัญชีได้ตามปกติ)
+- Local tests71/71 รวม56tracked+15เฉพาะเครื่อง ครอบคลุม conflicts/invalid inputs/a–zเต็ม/activeไม่ตรง/สูตร/whitelist/shared receipt/retry ยังไม่อ้างว่าทุกfailure/concurrency caseผ่านบริการGoogleจริง รายการทดสอบร่วมที่เหลือยังต้องทำต่อ
+- ภาพ local-delivery/qa-npc-public-20261106.jpg, qa-race-public-20261106.jpg, qa-race-log-20261106.jpg และ qa-npc-race-ready-20261106.jpg
+
+เก็บ NPC QA ทั้งสองไว้เป็นหลักฐาน ไม่ลบข้อมูลสมาชิกหรือเปลี่ยนบัญชีจริง ล้างแบบร่างทดสอบในหน้าadminแล้ว รายการUIเพิ่มในadmin-ui-backlog.md
