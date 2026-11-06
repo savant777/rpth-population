@@ -44,6 +44,8 @@ Local tests ครอบคลุม date/server validation, UID/CharID/face con
 
 **แก้กติกาล่าสุด:** ต้องเป็นตัวละครที่กำลังใช้งานเท่านั้น เคสออนไลน์ชื่อตัวรองที่ log1165 ทำขณะใช้ MAIN จึงเป็นหลักฐานของข้อผิดพลาดเดิม ไม่ใช่เคสผ่านตามกติกาล่าสุด ต้องทดสอบแทนว่า MAIN→แก้ SUB ถูกปฏิเสธ และเมื่อใช้ SUB แล้วแก้ SUB ได้ แต่แก้ MAIN ไม่ได้ รวมกรณี active flags ซ้ำ/หาย/ไม่ตรง Player ต้องหยุดโดยไม่มีแผนเขียน
 
+แก้แล้วใน commit1e87576 / AppsScript v8: local tests65/65 ครอบคลุม MAIN และ SUB ที่ใช้งานจริง, ปฏิเสธตัวอื่น/flagsซ้ำ/หาย/ไม่ตรงslot และ commit หลังเปลี่ยน active character; reader ตรวจ formula errors ใน Is Active Character/Player Active Character แล้ว ผลออนไลน์: ส่งทั้งชื่อและเมจของ SUB1 จากหน้าเก่าขณะใช้ MAIN ถูกปฏิเสธ ตรวจแถวlog1166ยังว่าง ไม่มี commit ในรอบนี้ ต้อง refresh/login เพื่อโหลด UI ล่าสุด ไม่ถือว่าการแก้ SUB ขณะใช้ MAIN ในหลักฐานเก่าเป็นเคสผ่านอีกต่อไป
+
 - ชื่อ MAIN เปลี่ยน Users/Characters/Player และ append log; ชื่อตัวรองหรือเมจอย่างเดียวเปลี่ยน Characters และ append log
 - ชื่อ/เมจใหม่ว่างคงค่าเดิม; ค่าเดิมไม่ถือเป็นการเปลี่ยนจริง Type ต้องตรงสิ่งที่เปลี่ยน คง CharID/Slot/ลิงก์/Active และ flags อื่น
 - log เก็บค่าเก่าก่อนแก้ From=To และ AffectsUsage FALSE; ไม่เติมสูตรทับแถวข้อมูลเดิม
