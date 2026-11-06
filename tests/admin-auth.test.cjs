@@ -35,6 +35,13 @@ test('HTTP routes protect samples, cookies, origins and server files', async t =
   await new Promise(resolve => app.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => app.close(resolve)));
   const origin = `http://127.0.0.1:${app.address().port}`;
+  const configResponse = await fetch(`${origin}/admin-config.js`);
+  assert.equal(configResponse.status, 200);
+  assert.equal(configResponse.headers.get('cache-control'), 'no-store');
+  const config = { window: {} };
+  require('node:vm').runInNewContext(await configResponse.text(), config);
+  assert.equal(config.window.RPTH_ADMIN_CONFIG.apiBase, '');
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../admin-config.js'), 'utf8'), /https:\/\/rpth-admin-test\.onrender\.com/);
   const post = (route, body, cookie = '', source = origin) => fetch(`${origin}/api/admin/${route}`, { method: 'POST', headers: { Origin: source, 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify(body) });
   assert.equal((await post('verify', {})).status, 401);
   assert.equal((await fetch(`${origin}/admin-sample-data.js`)).status, 401);

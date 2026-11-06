@@ -110,7 +110,7 @@
   function showErrors(errors){$("formErrors").classList.remove("success");$("formErrors").innerHTML=`<ul>${errors.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;$("formErrors").hidden=false;$("formErrors").scrollIntoView({behavior:"smooth",block:"center"});}
   function showReview(plan,f){
     if(live){
-      $("reviewContent").innerHTML=`<p class="review-meta">ลงทะเบียนผู้เล่นใหม่ · วันที่ ${esc(M.displayDate(f.date))} · บัญชี ${esc(plan.operator)}<br>ยืนยันแล้วจะเพิ่มข้อมูลลงชีตสำเนาทดสอบ</p>${plan.warnings.map(w=>`<p class="review-warning">${esc(w)}</p>`).join("")}${plan.changes.map(change=>`<section class="review-sheet"><h3>${esc(change.sheet)}</h3><div class="change-item"><dl>${Object.entries(change.fields).map(([key,value])=>`<dt>${esc(key)}</dt><dd>${esc(value===""?"(ว่าง)":value)}</dd>`).join("")}</dl>${change.formulas?`<p>ใช้สูตรเดิม: ${change.formulas.map(esc).join(", ")}</p>`:""}</div></section>`).join("")}`;
+      $("reviewContent").innerHTML=`<p class="review-meta">${esc(M.actions.find(item=>item.id===action).title)} · วันที่ ${esc(M.displayDate(f.date))} · บัญชี ${esc(plan.operator)}<br>ยืนยันแล้วจะบันทึกข้อมูลลงชีตสำเนาทดสอบ</p>${plan.warnings.map(w=>`<p class="review-warning">${esc(w)}</p>`).join("")}${plan.changes.map(change=>`<section class="review-sheet"><h3>${esc(change.sheet)}${change.row?` · แก้ไขแถว ${esc(change.row)}`:" · เพิ่มแถวใหม่"}</h3><div class="change-item"><dl>${Object.entries(change.fields).map(([key,value])=>`<dt>${esc(key)}</dt><dd>${esc(value===""?"(ว่าง)":value)}</dd>`).join("")}</dl>${change.formulas?`<p>ใช้สูตรเดิม: ${change.formulas.map(esc).join(", ")}</p>`:""}</div></section>`).join("")}`;
       pending={action,values:f,plan};setStep(2);$("reviewDialog").showModal();return;
     }
     const config=M.actions.find(a=>a.id===action),sheets=[...new Set(plan.patches.map(p=>p.sheet))];
@@ -157,6 +157,6 @@
   $("historyButton").addEventListener("click",()=>{renderHistory();$("historyDialog").showModal();});
   $("clearHistory").addEventListener("click",()=>{history=[];storage.set("rpth-admin-demo-history",history);renderHistory();});
   if(!data.players.length)$("demoDataStatus").textContent="ยังไม่เชื่อมข้อมูลทะเบียน · ยังตรวจความซ้ำในข้อมูลจริงไม่ได้";
-  if(live){$("demoDataStatus").textContent="ข้อมูลสดจากชีตสำเนา · เปิดเฉพาะลงทะเบียนผู้เล่นใหม่";document.querySelector(".demo-banner strong").textContent="เชื่อมชีตสำเนาทดสอบ · ยืนยันแล้วเขียนข้อมูลในสำเนา";$("confirmButton").textContent="ยืนยันเพิ่มลงชีตสำเนา";$("stepDone").lastChild.textContent="บันทึกในสำเนา";$("historyButton").hidden=true;}
+  if(live){$("demoDataStatus").textContent="ข้อมูลสดจากชีตสำเนา · เลือกได้เฉพาะฟอร์มที่ server รองรับ";document.querySelector(".demo-banner strong").textContent="เชื่อมชีตสำเนาทดสอบ · ยืนยันแล้วเขียนข้อมูลในสำเนา";$("confirmButton").textContent="ยืนยันบันทึกลงชีตสำเนา";$("stepDone").lastChild.textContent="บันทึกในสำเนา";$("historyButton").hidden=true;}
   renderForm(action);renderHistory();
 })();

@@ -59,7 +59,7 @@ export function createApp({ passwordHash = process.env.RPTH_ADMIN_PASSWORD_HASH,
         const session = auth.session(token);
         if (!session) return json(401, { error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' });
         if (route === 'verify') return json(200, { session: publicSession(session) });
-        if (route === 'preview' && input.action !== 'register') return json(400, { error: 'ตอนนี้เชื่อมเฉพาะลงทะเบียนผู้เล่นใหม่' });
+        if (route === 'preview' && !['register', 'edit'].includes(input.action)) return json(400, { error: 'ฟอร์มนี้ยังไม่รองรับการบันทึก' });
         const owner = createHash('sha256').update(token).digest('hex');
         try {
           const data = await gateway.call(route === 'bootstrap' ? 'bootstrap' : route, input, { operator: session.operator, owner });
@@ -70,6 +70,13 @@ export function createApp({ passwordHash = process.env.RPTH_ADMIN_PASSWORD_HASH,
       const file = pathname === '/' ? 'index.html' : pathname.slice(1);
       if (!files.has(file)) { response.writeHead(404); response.end('Not found'); return; }
       if (file === 'admin-sample-data.js' && !auth.session(token)) return json(401, { error: 'Unauthorized' });
+      if (file === 'admin-config.js') {
+        // Local UI uses this server's cookie-authenticated API. The public file
+        // stays pointed at Render for GitHub Pages; production never serves it.
+        response.writeHead(200, { 'Content-Type': types['.js'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+        response.end('window.RPTH_ADMIN_CONFIG = Object.freeze({ apiBase: "" });\n');
+        return;
+      }
       try {
         const body = await readFile(join(root, file));
         response.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });

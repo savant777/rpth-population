@@ -56,5 +56,12 @@ test('Apps Script gateway rejects unsigned, stale, repeated and wrong-operator r
   assert.equal(invoke().ok, true);
   assert.equal(invoke().ok, false);
   assert.equal(calls, 1);
+  let prepared;
+  context.prepareRegistrationWriteTest = (values, operator, action) => { prepared = { values, operator, action }; return { canCommit: true }; };
+  assert.equal(invoke({ nonce: 'c'.repeat(48), command: 'preview', request: { action: 'edit', values: { date: '2026-11-06', uid: '42' } } }).ok, true);
+  assert.equal(prepared.action, 'edit');
+  assert.equal(prepared.operator, 'Admin');
+  assert.equal(prepared.values.date, '06/11/2026');
+  assert.equal(invoke({ nonce: 'd'.repeat(48), command: 'preview', request: { action: 'inactive', values: {} } }).ok, false);
   assert.equal(context.RPTH_WEB_CONTEXT_, null);
 });

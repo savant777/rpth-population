@@ -9,16 +9,17 @@ function openRegistrationWriteTest() {
   );
 }
 
-function prepareRegistrationWriteTest(input, operator) {
+function prepareRegistrationWriteTest(input, operator, action) {
   assertTestOperator_(operator);
-  var plan = previewNewPlayerInCopy(input);
+  action = action || 'register';
+  var plan = action === 'register' ? previewNewPlayerInCopy(input) : previewRegistryAction_(input, action);
   if (plan.errors.length) return plan;
   var book = adminTestBook_();
   var snapshot = registrationSnapshot_(book);
   if (!adminTestOwner_()) throw new Error('ไม่พบผู้ใช้ Google สำหรับผูกคำขอ กรุณาเปิดชีตด้วยบัญชีของคุณ');
   var requestId = Utilities.getUuid(), token = Utilities.getUuid();
   var state = { requestId: requestId, token: token, input: input, operator: operator,
-    fingerprint: registrationDigest_(snapshot), plan: plan,
+    fingerprint: registrationDigest_(snapshot), plan: plan, action: action,
     owner: adminTestOwner_(), expires: Date.now() + 10 * 60 * 1000 };
   CacheService.getUserCache().put('rpth-write-' + token, JSON.stringify(state), 600);
   plan.mode = 'TEST_COPY_READY';
@@ -48,15 +49,15 @@ function commitRegistrationWriteTest(request) {
     var state = JSON.parse(cached);
     if (state.requestId !== request.requestId || state.owner !== adminTestOwner_() || state.expires < Date.now()) throw new Error('สรุปหมดอายุหรือคำขอไม่ตรงกัน กรุณาสรุปใหม่');
     assertTestOperator_(state.operator);
-    var plan = previewNewPlayerInCopy(state.input);
+    var plan = !state.action || state.action === 'register' ? previewNewPlayerInCopy(state.input) : previewRegistryAction_(state.input, state.action);
     if (plan.errors.length) throw new Error(plan.errors.join('\n'));
     var snapshot = registrationSnapshot_(book);
     if (registrationDigest_(snapshot) !== state.fingerprint || JSON.stringify(plan.changes) !== JSON.stringify(state.plan.changes)) throw new Error('ข้อมูลเปลี่ยนหลังเปิดสรุป กรุณาตรวจสอบและสรุปใหม่');
     var result = buildRegistrationBatch_(plan, snapshot);
     receipt = { mode: 'TEST_COPY_COMMITTED', requestId: request.requestId, owner: state.owner,
       operator: state.operator, committedAt: new Date().toISOString(),
-      uid: plan.changes[0].fields.UserID, charId: plan.changes[1].fields.CharID,
-      rows: result.rows, note: 'บันทึกครบ 4 ชีตในสำเนาทดสอบแล้ว' };
+      uid: plan.uid || plan.changes[0].fields.UserID, charId: plan.charId || plan.changes[1].fields.CharID,
+      action: state.action || 'register', rows: result.rows, note: 'บันทึกครบ ' + Object.keys(result.rows).length + ' ชีตในสำเนาทดสอบแล้ว' };
     result.requests.push({ createDeveloperMetadata: { developerMetadata: {
       // Stable unique-ID constraint makes a duplicate batch fail atomically,
       // including when the earlier response was lost. An unrelated ID collision
@@ -127,13 +128,26 @@ function registrationSnapshot_(book) {
 }
 
 function buildRegistrationBatch_(plan, snapshot) {
-  if (plan.errors.length || plan.changes.length !== 4) throw new Error('แผนบันทึกไม่ครบ 4 ชีต');
+  if (plan.errors.length || (plan.action !== 'edit' && plan.changes.length !== 4) || (plan.action === 'edit' && plan.changes.length < 2)) throw new Error('แผนบันทึกไม่ครบ 4 ชีตหรือไม่ถูกต้อง');
   var requests = [], rows = {};
   var formulaColumns = { Users: [3], Characters: [], Player: [3, 5, 6, 8, 9, 11, 15, 16, 18, 19, 20, 21], 'log ลงทะเบียนตัวละคร': [11] };
   plan.changes.forEach(function (change) {
     var table = snapshot.filter(function (item) { return item.name === change.sheet; })[0];
     if (!table) throw new Error('ไม่พบตาราง ' + change.sheet);
     var headers = table.values[0], width = headers.length, end = 1;
+    if (change.row != null) {
+      var allowed = { Characters: ['Character Name', 'Character Faceclaim'], Users: ['Username'], Player: ['Display Name'] };
+      if (plan.action !== 'edit' || !Number.isInteger(change.row) || change.row < 2 || change.row > table.values.length || change.row > 10000 || !allowed[change.sheet]) throw new Error('แถวแก้ไขไม่ถูกต้อง');
+      if (String(table.values[change.row - 1][0]).replace(/^0+(?=\d)/, '') !== plan.uid) throw new Error('UID ของแถวแก้ไขไม่ตรงกัน');
+      if (change.sheet === 'Characters' && table.values[change.row - 1][1] !== plan.charId) throw new Error('CharID ของแถวแก้ไขไม่ตรงกัน');
+      rows[change.sheet] = change.row;
+      Object.keys(change.fields).forEach(function (field) {
+        var column = headers.indexOf(field);
+        if (allowed[change.sheet].indexOf(field) < 0 || column < 0 || table.formulas[change.row - 1][column]) throw new Error('ห้ามเขียนช่องสูตรหรือช่องที่ไม่รู้จัก: ' + field);
+        requests.push({ updateCells: { start: { sheetId: table.sheetId, rowIndex: change.row - 1, columnIndex: column }, rows: [{ values: [{ userEnteredValue: { stringValue: String(change.fields[field]) } }] }], fields: 'userEnteredValue' } });
+      });
+      return;
+    }
     for (var i = 1; i < table.values.length; i++) {
       if (table.values[i].some(function (v) { return v !== '' && v !== null; }) || table.formulas[i].some(Boolean)) end = i + 1;
     }

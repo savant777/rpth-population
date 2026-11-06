@@ -116,6 +116,62 @@ test('response lost after atomic commit recovers receipt without sending another
   assert.equal(h.context.commitRegistrationWriteTest(request).requestId, request.requestId);
   assert.equal(h.count(), 1);
 });
+
+test('a different session cannot commit another session preview', () => {
+  const h = harness();
+  const prepared = h.context.prepareRegistrationWriteTest(h.input, 'Admin');
+  const request = { requestId: prepared.requestId, previewToken: prepared.previewToken };
+  h.owner('user-2');
+  assert.throws(() => h.context.commitRegistrationWriteTest(request), /ไม่ตรงกัน/);
+  assert.equal(h.count(), 0);
+  h.owner('user-1');
+  assert.equal(h.context.commitRegistrationWriteTest(request).requestId, request.requestId);
+  assert.equal(h.count(), 1);
+});
+
+test('two previews cannot both write after the first changes the spreadsheet', () => {
+  const h = harness();
+  const first = h.context.prepareRegistrationWriteTest(h.input, 'Admin');
+  const second = h.context.prepareRegistrationWriteTest(h.input, 'Admin');
+  h.context.commitRegistrationWriteTest({ requestId: first.requestId, previewToken: first.previewToken });
+  // Simulate the new row returned by Sheets after the first atomic batch.
+  h.snapshot[0].values.push([99999, 'new registration', '', '']);
+  h.snapshot[0].formulas.push(['', '', '', '=A3']);
+  assert.throws(() => h.context.commitRegistrationWriteTest({ requestId: second.requestId, previewToken: second.previewToken }), /ข้อมูลเปลี่ยน/);
+  assert.equal(h.count(), 1);
+});
+
+test('expired previews and a busy script lock do not submit a batch', () => {
+  const h = harness();
+  const prepared = h.context.prepareRegistrationWriteTest(h.input, 'Admin');
+  const request = { requestId: prepared.requestId, previewToken: prepared.previewToken };
+  const key = 'rpth-write-' + request.previewToken;
+  const state = JSON.parse(h.cache.get(key));
+  state.expires = 0;
+  h.cache.set(key, JSON.stringify(state));
+  assert.throws(() => h.context.commitRegistrationWriteTest(request), /หมดอายุ/);
+  let released = false;
+  h.context.LockService = { getScriptLock: () => ({ tryLock: () => false, releaseLock: () => { released = true; } }) };
+  assert.throws(() => h.context.commitRegistrationWriteTest(request), /กำลังบันทึก/);
+  assert.equal(released, false);
+  assert.equal(h.count(), 0);
+});
+
+test('row allocation preserves blank-UID checkbox rows and permits row 10000 only', () => {
+  const { context, plan, snapshot } = fixture();
+  const characters = snapshot[1];
+  characters.values.push(['', '', '', '', '', '', false]);
+  characters.formulas.push(Array(7).fill(''));
+  assert.equal(context.buildRegistrationBatch_(plan, snapshot).rows.Characters, 4);
+  const users = snapshot[0];
+  users.values = Array.from({ length: 9999 }, (_, i) => i === 0 ? users.values[0] : [i, '', '', '']);
+  users.formulas = users.values.map(() => ['', '', '', '=A2']);
+  users.maxRows = 10000;
+  assert.equal(context.buildRegistrationBatch_(plan, snapshot).rows.Users, 10000);
+  users.values.push([99999, '', '', '']);
+  users.formulas.push(['', '', '', '=A10000']);
+  assert.throws(() => context.buildRegistrationBatch_(plan, snapshot), /10,000/);
+});
 test('readback reports formula errors and spill overwrites after committed writes', () => {
   const { context } = fixture();
   const receipt = { uid: '99999', charId: 'C-99999-01', rows: { Users: 3, Characters: 3, Player: 3, 'log ลงทะเบียนตัวละคร': 3 } };

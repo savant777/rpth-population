@@ -71,7 +71,7 @@
       const result = await request('session');
       mode = result.mode;
       $('loginOperator').disabled = false;
-      $('loginStatus').textContent = result.configured ? (mode === 'test-copy' ? 'เชื่อมชีตสำเนา · เปิดบันทึกเฉพาะลงทะเบียนผู้เล่นใหม่ · เซสชัน 8 ชั่วโมง' : 'เซสชันทดลองบนเครื่องนี้ · หมดอายุใน 8 ชั่วโมง · ไม่มีการเขียนชีต') : 'ยังไม่ได้ตั้ง password hash บนเซิร์ฟเวอร์';
+      $('loginStatus').textContent = result.configured ? (mode === 'test-copy' ? 'เชื่อมชีตสำเนา · ฟอร์มตามที่ server รองรับ · เซสชัน 8 ชั่วโมง' : 'เซสชันทดลองบนเครื่องนี้ · หมดอายุใน 8 ชั่วโมง · ไม่มีการเขียนชีต') : 'ยังไม่ได้ตั้ง password hash บนเซิร์ฟเวอร์';
       $('loginPassword').disabled = !result.configured;
       $('loginSubmit').disabled = !result.configured;
       if (result.configured) $('loginStatus').hidden = true;

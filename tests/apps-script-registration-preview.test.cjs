@@ -74,3 +74,25 @@ test('dialog JavaScript parses and does not contain a commit call', () => {
   assert.doesNotMatch(source, /\.(setValues?|appendRow|insertRows?|setFormulas?|copyTo|clearContent)\s*\(/);
   assert.doesNotMatch(source, /function\s+(doGet|doPost|commit\w*)\s*\(/);
 });
+
+test('calendar boundaries, future-date warnings and input limits fail safely', () => {
+  for (const [date, iso] of [['31/01/2026', '2026-01-31'], ['28/02/2026', '2026-02-28'], ['29/02/2024', '2024-02-29'], ['31/12/2026', '2026-12-31'], ['01/01/2027', '2027-01-01']]) {
+    assert.equal(context.parsePreviewDate_(date), iso);
+    const result = plan({ date });
+    assert.equal(result.errors.length, 0, date);
+    assert.equal(result.changes[3].fields['Effective Date'], iso);
+    assert.equal(result.warnings.some(w => w.includes('อนาคต')), iso > '2026-11-05');
+  }
+  for (const date of ['31/04/2026', '29/02/2027', '00/01/2026', '01/13/2026', '1/1/2026']) assert.equal(context.parsePreviewDate_(date), '', date);
+  for (const values of [{ note: 'x'.repeat(2001) }, { name: '   ' }, { faceclaim: '   ' }, { uid: '9'.repeat(16) }, { post: '9'.repeat(16) }]) {
+    const result = plan(values);
+    assert.ok(result.errors.length);
+    assert.equal(result.changes.length, 0);
+  }
+  const inputCopy = { ...input, name: '<img src=x onerror=alert(1)>', note: '=IMPORTXML("example", "//x")' };
+  const before = JSON.stringify(inputCopy);
+  const result = context.planNewPlayerPreview_(inputCopy, tables(), ['มนุษย์'], '2026-11-05');
+  assert.equal(result.changes[1].fields['Character Name'], inputCopy.name);
+  assert.equal(result.changes[3].fields.Note, inputCopy.note);
+  assert.equal(JSON.stringify(inputCopy), before);
+});

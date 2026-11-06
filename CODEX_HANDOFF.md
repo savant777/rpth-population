@@ -4,6 +4,15 @@
 
 ## เริ่มที่นี่
 
+### ความคืบหน้าเพิ่มเติม 6 พ.ย. — อ่านก่อนสถานะเดิมด้านล่าง
+
+- ผู้ดูแลขอให้ทำครบทุกฟอร์มเป็นลำดับ ส่งให้ตรวจทีละฟอร์ม และรวบรวม UI ไว้แก้ท้ายสุด แผน/ผลทดสอบอยู่ docs/admin-test-matrix.md และ docs/admin-ui-backlog.md
+- เพิ่ม CharacterEdit.gs (server planner + reuse preview/atomic commit/receipt/readback), Node/gateway รองรับ edit, UI แสดงเมนูตาม supportedActions ยังต้อง deploy ชุดนี้และทดสอบออนไลน์ก่อนนับ edit ว่าพร้อมตรวจ ไม่ใช่เฉพาะ demo อีกต่อไป local tests 62/62 รวมไฟล์เก่า untracked15 tests; builder30 functions (ยังไม่ deploy ขณะเขียนบันทึกนี้)
+- register stale preview ผ่านออนไลน์: เปลี่ยนเฉพาะ log!M1161 ของ QA หลังเปิดสรุป B, server ปฏิเสธ ไม่มีแถว1162เพิ่ม คืน Note เดิมและปิดสรุปแล้ว รายละเอียดใน test matrix
+- ผู้ดูแลยืนยันกติกาใหม่: Inactive ให้ Post Check/Activity Check/Reclaim Approved FALSE ทั้งหมดและยกเลิกสิทธิ์ล็อกที่เกี่ยวข้อง; ต่อหลังหมดอายุ LockID ใหม่เริ่มวันอนุมัติ; ไม่เก็บ extra-sub permission แยก คุยตกลงก่อนกรอกฟอร์มแล้ว; MAIN ใหม่เก็บลิงก์ใหม่ ตัวเดิมคงลิงก์เดิม; ล็อกเมจที่ใช้อยู่พักนับวันอนุมัติทันที; ตัวพักนับเปลี่ยนเมจให้ยกเลิกสิทธิ์เดิมได้เลย แก้ admin-flow.md แล้ว
+- งานค้างของกติกาล็อกคืออ่านชื่อ Type native ที่สูตร/validation รองรับก่อนเขียนเหตุการณ์; edit ของตัวมีล็อกยังถูก block ไว้เพราะโค้ดเหตุการณ์ล็อกยังไม่เสร็จ ไม่ใช่เพราะผู้ดูแลยังไม่ตอบกติกา
+- ไฟล์เก่า untracked admin-model.test.cjs / tools/export-admin-sample.py / HTMLไทย ยังไม่รวมเป็นงานรอบนี้
+
 1. `git status --short --branch` ก่อน แล้ว `git pull --ff-only origin main` เมื่อไม่มีการแก้ไขที่ชนกัน ห้าม reset ทับงานของอีกเครื่อง
 2. อ่านไฟล์นี้ ตามด้วย `docs/admin-flow.md`, `docs/apps-script-plan.md`, `docs/render-setup.md`
 3. รัน `npm test` และ `npm run build:apps-script` ไม่ต้อง `npm install` เพราะไม่มี dependencies เพิ่ม หาก sandbox ห้ามเชื่อม localhost ต้องขอ escalation เพื่อทดสอบ HTTP ไม่ใช่ข้าม tests
@@ -90,7 +99,7 @@ Source ทั้ง 4 ไฟล์ถูกวางรวมใน **Code.gs �
 
 Source บน Git กับ deployment บน Apps Script แยกกัน push Git ไม่ได้ทำให้ Apps Script อัปเดตเอง เช่นเดียวกับ Render ที่ `autoDeployTrigger: off` ต้อง Manual Deploy latest commit เมื่อ backend เปลี่ยน ส่วนการแก้ Apps Script อย่างเดียวไม่ต้อง redeploy Render
 
-`npm run dev` เป็น local server 127.0.0.1:4173 หาก admin-config.js ยังชี้ Render จะเป็น live mode ไปยัง backend จริงและ CORS ไม่อนุญาต localhost ต้องเปลี่ยน apiBase เป็นค่าว่างเฉพาะเครื่องก่อนทดสอบ local auth และ **อย่า push การเปลี่ยน URL ชั่วคราวนั้น** หรือใช้ API tests เพื่อทดสอบ backend โดยไม่แก้ config
+`npm run dev` เป็น local server 127.0.0.1:4173 และเสิร์ฟ admin-config.js แบบ apiBase ว่างจาก server โดยไม่แก้ไฟล์จริง จึงใช้ API และ cookie บน origin เดียวกันได้ ไฟล์จริงสำหรับ GitHub Pages ยังคงชี้ Render; ไม่เพิ่ม localhost เข้า CORS ของระบบออนไลน์ ตั้ง password hash ใน environment ก่อนรัน; หากไม่ได้ตั้ง gateway จะเป็น local-demo หากตั้ง gateway จะยังใช้สำเนาเดิม รายละเอียดใน docs/render-setup.md
 
 ## Secrets / สิทธิ์ / การส่งงานต่อ
 
@@ -113,6 +122,12 @@ Source บน Git กับ deployment บน Apps Script แยกกัน pus
 ## งานต่อไปตามลำดับ
 
 ### A. ทำลงทะเบียนใหม่ให้พร้อมใช้จริงก่อน
+
+ผลทดสอบออนไลน์ 6 พ.ย. ผ่าน Chrome ที่ผู้ดูแลล็อกอินไว้ โดยใช้สำเนา ID เดิม: วันที่ 31/02/2026 ถูก client ปฏิเสธ; UID 503 ถูก server ปฏิเสธพร้อม CharID ซ้ำ; เพิ่มข้อมูลสังเคราะห์ `RPTH QA 20261106 A` UID/post 99061101 สำเร็จ requestId `fef6b356-ccf4-4dbe-bda8-d1f15a3780eb` ที่ Users357 / Characters406 / Player296 / log1161 ใบรับ verification.ok=true ทุกชีต ไม่มี formulaErrors ตรวจค่าจริงผ่าน UI สำเนา: Users Active, CharID C-99061101-01 / MAIN / Active TRUE, Player Status TRUE / MAIN1 / SUB0 / ExemptUntil06/02/2027, log วันที่06/11/2026 / NEW→MAIN / AffectsUsage FALSE / Active และ Public Player แสดง UID/ชื่อ/สถานะ/usage/ExemptUntil ตรงกัน หลังเพิ่มแล้วลอง UID99061102 กับเฟซเคลมเดิมถูกปฏิเสธ และ UID99061101 กับเฟซเคลมใหม่ถูกปฏิเสธด้วย UID/CharID ซ้ำ ไม่ได้เพิ่มรายการที่สอง เก็บแถว QA ไว้เป็นหลักฐาน ไม่ได้ลบหรือแก้ข้อมูลสมาชิกเดิม ภาพ local ignored: local-delivery/qa-public-player-20261106.jpg
+
+ยังไม่ได้ทดสอบออนไลน์: retry commit request เดิม (ต่างจาก submit ฟอร์มซ้ำ), preview stale/หมดอายุ, สอง session, response หาย, logout/rotation, วันที่ข้ามเดือนปลายเดือน และ rollover สูตรปี2027; ไม่จำลองตัดเครือข่ายหรืออ่าน token ผ่าน browser พบ UI หลัง success ยังมี draftStatus ว่า “ยังไม่ได้บันทึกลงทะเบียน” ทั้งที่ใบรับสำเร็จ ควรปรับข้อความ/แบบร่างให้ตรงกันก่อนใช้งานจริง ไม่ได้แก้หรือ deploy จุดนี้ในรอบทดสอบ
+
+ความคืบหน้า 6 พ.ย. บนเครื่องนี้: เพิ่ม local contract tests สำหรับคนละ session ยืนยัน preview, สอง preview หลังข้อมูลเปลี่ยน, preview หมดอายุ, script lock ไม่ว่าง, แถว UID ว่างแต่ checkbox FALSE และขอบเขตแถว 10,000 ผ่าน `npm test` 55/55 (รวม tests/admin-model.test.cjs ที่ยัง untracked เฉพาะเครื่องนี้; ชุด tracked มี 40 tests) และ build bundle 27 unique functions สำเร็จ ไม่ได้เขียนชีตหรือ deploy; กรณีเหล่านี้ยังเป็น mock ไม่ใช่ผลทดสอบออนไลน์ แถว checkbox FALSE ถูกเก็บไว้และต่อท้าย ไม่ได้นำแถวเดิมมาใช้ซ้ำ จึงยังต้องตรวจพื้นที่จริงในสำเนาและสูตรอ้างอิงปี 2027
 
 - ตรวจ tests ปัจจุบัน แล้วเพิ่ม integration/contract coverage ที่ยังขาด โดยไม่เขียนข้อมูลผู้ใช้จริง
 - ทดสอบบนสำเนาผ่านเส้นทางออนไลน์: UID ซ้ำ/เฟซเคลมซ้ำ/CharID ที่เคยใช้, วันที่ผิดและข้ามเดือน, preview เก่า, กดยืนยันซ้ำ, สองแท็บ/สองเซสชัน, response หายก่อน/หลัง batch, logout/หมดอายุ/เปลี่ยนรหัส
@@ -141,7 +156,7 @@ Source บน Git กับ deployment บน Apps Script แยกกัน pus
 ### D. ทำให้ส่งมอบ/อัปเดตง่าย
 
 - ใช้ builder ที่มีแล้วเป็นฐาน ประเมินการ sync/version/deploy Apps Script แบบคำสั่งเดียวหรือ workflow ที่ปลอดภัย เช่น clasp โดยต้องไม่นำ credentials/token ขึ้น Git และไม่สั่งผู้ดูแลทำ setup ก่อนเตรียมโค้ด/ข้อจำกัดให้ชัด
-- จัด local development ให้ไม่ต้องแก้ public config สลับไปมา โดยรักษา CORS/สิทธิ์ live ไว้
+- ทำแล้วใน local development: server เสิร์ฟ config สำหรับ same-origin โดยไม่แก้ public config พร้อมทดสอบ config local และการไม่เสิร์ฟไฟล์นี้ใน production; ยังไม่ได้ deploy การเปลี่ยนแปลงนี้
 - ทำคู่มือชุดเดียวสำหรับติดตั้ง อัปเดต สำรอง กู้คืน เปลี่ยนรหัส และโอนเจ้าของบริการ/บัญชี
 - ไม่เพิ่มบริการฐานข้อมูลใหม่หรือย้ายออกจาก Sheets โดยไม่มีคำสั่งผู้ดูแล
 

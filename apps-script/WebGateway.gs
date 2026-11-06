@@ -51,11 +51,11 @@ function doPost(event) {
     var result;
     if (input.command === 'bootstrap') result = gatewayBootstrap_();
     else if (input.command === 'preview') {
-      if (!input.request || input.request.action !== 'register') throw new Error('ตอนนี้เชื่อมเฉพาะลงทะเบียนผู้เล่นใหม่');
+      if (!input.request || ['register', 'edit'].indexOf(input.request.action) < 0) throw new Error('ฟอร์มนี้ยังไม่รองรับการบันทึก');
       var values = input.request.values;
       if (!values || !/^\d{4}-\d{2}-\d{2}$/.test(values.date || '')) throw new Error('Expected ISO date');
       values.date = values.date.split('-').reverse().join('/');
-      result = prepareRegistrationWriteTest(values, input.operator);
+      result = prepareRegistrationWriteTest(values, input.operator, input.request.action);
     } else result = commitRegistrationWriteTest(input.request);
     return gatewayResponse_({ ok: true, nonce: nonce, result: result }, secret);
   } catch (error) {
@@ -94,7 +94,7 @@ function gatewayBootstrap_() {
   var uid = function (value) { return String(value).trim().replace(/^0+(?=\d)/, ''); };
   var date = function (value) { return value instanceof Date ? Utilities.formatDate(value, 'Asia/Bangkok', 'yyyy-MM-dd') : String(value || ''); };
   return {
-    mode: 'test-copy', supportedActions: ['register'], snapshotDate: Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd'),
+    mode: 'test-copy', supportedActions: ['register', 'edit'], snapshotDate: Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd'),
     userIds: users.map(function (row) { return uid(row.UserID); }),
     players: players.map(function (row) {
       return { uid: uid(row.UserID), mainName: String(row['Display Name']), race: String(row.Race), status: row.Status === true, activeSlot: String(row['Active Character']),
