@@ -2,7 +2,7 @@
   "use strict";
   const actions = [
     {id:"register",group:"ทะเบียนตัวละคร",title:"ลงทะเบียนผู้เล่นใหม่",icon:"+",description:"เพิ่มผู้เล่นและตัวละครหลัก หลังตรวจประวัติเรียบร้อยแล้ว",sheets:["Users","Characters","Player","log ลงทะเบียนตัวละคร"]},
-    {id:"edit",group:"ทะเบียนตัวละคร",title:"เปลี่ยนชื่อ / เฟซเคลม",icon:"✎",description:"แก้ข้อมูลตัวละครเดิม โดยคง CharID และสลอตเดิม",sheets:["Characters","Users","Player","log ลงทะเบียนตัวละคร"]},
+    {id:"edit",group:"ทะเบียนตัวละคร",title:"เปลี่ยนชื่อ / เฟซเคลม",icon:"✎",description:"แก้ชื่อหรือเฟซเคลมของตัวละครที่กำลังใช้งาน โดยคง CharID และสลอตเดิม",sheets:["Characters","Users","Player","log ลงทะเบียนตัวละคร"]},
     {id:"sub",group:"ทะเบียนตัวละคร",title:"ลงทะเบียนตัวละครรอง",icon:"⊕",description:"เพิ่มตัวละครรองใหม่ และสลับไปใช้งานทันที",sheets:["Characters","Player","log ลงทะเบียนตัวละคร"]},
     {id:"switch",group:"ทะเบียนตัวละคร",title:"สลับใช้งานตัวละคร",icon:"⇄",description:"เลือกตัวละครที่มีอยู่แล้วเพื่อสลับใช้งานหลัก–รอง",sheets:["Characters","Player","log ลงทะเบียนตัวละคร"]},
     {id:"main",group:"ทะเบียนตัวละคร",title:"เปลี่ยนตัวละครหลัก",icon:"◇",description:"สร้างตัวหลักใหม่ หรือเลื่อนตัวรองที่กำลังใช้อยู่เป็นตัวหลัก",sheets:["Characters","Users","Player","log ลงทะเบียนตัวละคร"]},
@@ -16,6 +16,7 @@
   const clone = v => JSON.parse(JSON.stringify(v));
   const validChars = p => (p?.characters || []).filter(c=>c.slot==="MAIN" || /^SUB \d+$/.test(c.slot));
   const activeChar = p => validChars(p).find(c=>c.active) || validChars(p).find(c=>c.slot===p.activeSlot);
+  const editableChar = p => {const active=(p?.characters||[]).filter(c=>c.active===true);return active.length===1&&validChars(p).includes(active[0])&&active[0].slot===p.activeSlot?active[0]:undefined;};
   const currentLocks = (data,uid) => data.locks.filter(l=>l.uid===uid && ["กำลังนับ","พักนับ"].includes(l.status));
   const norm = s => String(s||"").normalize("NFKC").trim().toLowerCase();
   const displayDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"") ? s.split("-").reverse().join("/") : s || "—";
@@ -124,6 +125,7 @@
     }
     if(["edit","race","lock"].includes(action) && !target) errors.push("กรุณาเลือกตัวละคร");
     if(action==="edit" && target) {
+      if(editableChar(player)?.id!==target.id) errors.push("เปลี่ยนชื่อหรือเฟซเคลมได้เฉพาะตัวละครที่กำลังใช้งาน กรุณาสลับใช้งานก่อน");
       if(!f.name && !f.faceclaim) errors.push("กรอกชื่อใหม่หรือเฟซเคลมใหม่อย่างน้อยหนึ่งช่อง");
       const paused=lockFor(target);
       if(f.faceclaim && paused?.status==="พักนับ" && norm(f.faceclaim)!==norm(target.faceclaim)) errors.push("ตัวละครกำลังพักนับสิทธิ์ล็อก ต้องตกลงวิธีจัดการสิทธิ์ก่อนเปลี่ยนเฟซเคลม");
@@ -218,6 +220,6 @@
     }
     return {patches,warnings:[...new Set(warnings)],errors:[...new Set(errors)],batch};
   }
-  const api={actions,races,validChars,activeChar,currentLocks,nextCharId,nextSlot,batchMatch,plan,displayDate,parseInputDate,isISODate,clone};
+  const api={actions,races,validChars,activeChar,editableChar,currentLocks,nextCharId,nextSlot,batchMatch,plan,displayDate,parseInputDate,isISODate,clone};
   if(typeof module!=="undefined"&&module.exports) module.exports=api;else root.AdminModel=api;
 })(typeof globalThis!=="undefined"?globalThis:this);

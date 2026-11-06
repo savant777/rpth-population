@@ -44,7 +44,7 @@
     else if(action==="inactive") body=section(2,"รายชื่อที่ตรวจสอบเรียบร้อยแล้ว",field("names","รายชื่อหรือ UID",{required:true,wide:true,html:'<textarea name="names" id="names" rows="7" placeholder="หนึ่งคนต่อบรรทัด เช่น&#10;503&#10;637&#10;หรือวางตารางจากสคริปต์ตรวจโพสต์"></textarea>',help:"รองรับหนึ่งคนต่อบรรทัด หรือวางผล TSV จากสคริปต์ โดยอ่าน UID คอลัมน์แรก"})+`<div class="wide"><button type="button" class="secondary" id="sampleNames">ใส่รายชื่อตัวอย่าง</button></div>`+note("ใช้รายชื่อที่สรุปผลแล้ว ไม่ต้องตรวจโพสต์หรือกิจกรรมซ้ำในหน้านี้ · ชื่อที่ไม่พบหรือกำกวมต้องแก้ก่อนยืนยัน"));
     else {
       body=section(2,"บัญชีและตัวละคร",personField()+(["edit","switch","race","reclaim","lock"].includes(action)?charSelect():"")+ '<div id="accountContext" class="inline-account wide" hidden><div class="context-heading"><h3>ข้อมูลตัวละครปัจจุบัน</h3><span class="small-pill">ข้อมูลตัวอย่าง</span></div><div id="contextContent"></div></div>');
-      if(action==="edit") body+=section(3,"ข้อมูลที่ต้องการเปลี่ยน",field("name","ชื่อตัวละครใหม่",{placeholder:"เว้นว่างเพื่อใช้ชื่อเดิม"})+field("faceclaim","เฟซเคลมใหม่",{placeholder:"เว้นว่างเพื่อใช้เฟซเคลมเดิม"})+note("From / To เป็นสลอตเดียวกัน · คง CharID · ไม่เปลี่ยนลิงก์ประวัติ"));
+      if(action==="edit") body+=section(3,"ข้อมูลที่ต้องการเปลี่ยน",field("name","ชื่อตัวละครใหม่",{placeholder:"เว้นว่างเพื่อใช้ชื่อเดิม"})+field("faceclaim","เฟซเคลมใหม่",{placeholder:"เว้นว่างเพื่อใช้เฟซเคลมเดิม"})+note("แก้เฉพาะตัวละครที่กำลังใช้งาน · ต้องสลับใช้งานก่อนแก้ตัวอื่น · คง CharID และลิงก์ประวัติ"));
       if(action==="sub") body+=section(3,"ตัวละครรองใหม่",newFields()+`<div class="wide">${choice("extra","มีสิทธิ์เพิ่มตัวรองเกินโควตาปกติ")}</div>`+note("สลับจากตัวที่ใช้อยู่ไปตัวใหม่ทันที · ระบบจะแสดงรายการพักนับ / นับต่อของสิทธิ์ล็อกในหน้าสรุป"));
       if(action==="switch") body+=section(3,"เฟซเคลมที่จะใช้งาน",field("faceclaim","เฟซเคลมของตัวปลายทาง",{required:true,wide:true,placeholder:"ระบุเฟซเคลมที่จะใช้งาน"})+note("ตัวปลายทางต้องมีอยู่แล้ว · เฟซเคลมต้นทางจะถูกล้างเฉพาะเมื่อไม่มีสิทธิ์ล็อก · ไม่เปลี่ยนลิงก์ประวัติ"));
       if(action==="main") body+=section(3,"ตัวละครหลักใหม่",select("mainMode","รูปแบบการเปลี่ยน",[["new","สร้างตัวละครหลักใหม่"],["promote","เลื่อนตัวรองที่กำลังใช้อยู่เป็นตัวหลัก"]],{required:true,wide:true})+`<div id="newMainFields" class="field-grid wide">${newFields()}</div><div class="wide">${choice("keepMain","เก็บตัวละครหลักเดิมเป็นตัวรอง",true)}</div><div id="mainOptions" class="field-grid wide"><div class="wide">${choice("extra","มีสิทธิ์เพิ่มตัวรองเกินโควตาปกติ")}</div>${select("replaceId","ตัวรองที่จะถูกแทนที่เมื่อโควตาเต็ม",[["","ไม่แทนที่ · ใช้สลอตว่างก่อน"]],{wide:true})}</div>`+note("ตัวละครใหม่จะได้ CharID ใหม่ · ตัวที่นำออกเก็บ Slot เป็น - · ค่าธรรมเนียมคำนวณจาก log ตามเดิม"));
@@ -68,8 +68,8 @@
       if(["switch","lock"].includes(action)&&$("faceclaim"))$("faceclaim").value="";
       if(action==="reclaim"&&$("oldFace"))$("oldFace").value="";
     }
-    const p=selectedPlayer(),chars=M.validChars(p),current=M.activeChar(p);
-    const list=action==="switch"?chars.filter(c=>c.id!==current?.id):chars;
+    const p=selectedPlayer(),chars=M.validChars(p),current=action==="edit"?M.editableChar(p):M.activeChar(p);
+    const list=action==="edit"?(current?[current]:[]):action==="switch"?chars.filter(c=>c.id!==current?.id):chars;
     setOptions($("charId"),[["","เลือกตัวละคร"],...list.map(c=>[c.id,`${c.name} · ${c.slot}`])]);
     if($("charId")&&!$("charId").value && action!=="switch" && current)$("charId").value=current.id;
     setOptions($("replaceId"),[["","ไม่แทนที่ · ใช้สลอตว่างก่อน"],...chars.filter(c=>c.slot!=="MAIN").map(c=>[c.id,`${c.name} · ${c.slot}`])]);
@@ -104,7 +104,7 @@
         $(`${key}-picker`).value=M.parseInputDate(el.value);
       }else el.value=value;
     }
-    if($("account"))updateAccount();for(const key of ["charId","lockId","replaceId"]){const el=$(key);if(el&&draft[key])el.value=draft[key];}updateLocks();if($("lockId")&&draft.lockId)$("lockId").value=draft.lockId;$("draftStatus").textContent="กู้คืนแบบร่างในเบราว์เซอร์นี้แล้ว";
+    if($("account"))updateAccount();for(const key of ["charId","lockId","replaceId"]){const el=$(key);if(el&&draft[key]&&!(action==="edit"&&key==="charId"))el.value=draft[key];}updateLocks();if($("lockId")&&draft.lockId)$("lockId").value=draft.lockId;$("draftStatus").textContent="กู้คืนแบบร่างในเบราว์เซอร์นี้แล้ว";
   }
   function setStep(step){["stepForm","stepReview","stepDone"].forEach((id,i)=>$(id).classList.toggle("current",i===step-1));}
   function showErrors(errors){$("formErrors").classList.remove("success");$("formErrors").innerHTML=`<ul>${errors.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;$("formErrors").hidden=false;$("formErrors").scrollIntoView({behavior:"smooth",block:"center"});}

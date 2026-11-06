@@ -4,8 +4,8 @@ function previewCharacterEditInCopy_(input) {
   if (!report.headersMatch || report.timezone !== 'Asia/Bangkok') throw new Error('โครงสร้างหรือเขตเวลาชีตสำเนาเปลี่ยน');
   var snapshot = registrationSnapshot_(book);
   // Required fields must still be read through the strict formula-error reader.
-  [['Users', ['UserID', 'Username']], ['Characters', ['UserID', 'CharID', 'Character Name', 'Character Slot', 'Character Faceclaim']],
-    ['Player', ['UserID', 'Display Name']], ['NPC', ['UserID', 'Display Name', 'Faceclaim']],
+  [['Users', ['UserID', 'Username']], ['Characters', ['UserID', 'CharID', 'Character Name', 'Character Slot', 'Character Faceclaim', 'Character Url', 'Is Active Character']],
+    ['Player', ['UserID', 'Display Name', 'Race', 'Status', 'Active Character']], ['NPC', ['UserID', 'Display Name', 'Faceclaim']],
     ['Public Faceclaim Locks', ['UserID', 'Lock Character Name', 'Lock Face Claim', 'End Date', 'CharID', 'LockID', 'Status']]]
     .forEach(function (definition) { readPreviewTable_(book, definition[0], definition[1]); });
   return planCharacterEdit_(input, snapshot, Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd'));
@@ -43,6 +43,8 @@ function planCharacterEdit_(input, snapshot, today) {
   if (users.length !== 1 || players.length !== 1) errors.push('ทะเบียนผู้เล่นไม่ครบหรือ UID ซ้ำ กรุณาตรวจชีตก่อน');
   if (errors.length) return { action: 'edit', errors: errors, warnings: warnings, changes: [], canCommit: false };
   var slot = String(target['Character Slot']);
+  var active = tables.Characters.filter(function (row) { return id(row.UserID) === f.uid && row['Is Active Character'] === true; });
+  if (active.length !== 1 || active[0].CharID !== target.CharID || players[0]['Active Character'] !== slot) errors.push('เปลี่ยนชื่อหรือเฟซเคลมได้เฉพาะตัวละครที่กำลังใช้งาน กรุณาสลับใช้งานก่อน หรือแก้ข้อมูลสลอตที่ไม่ตรงกัน');
   if (tables.Characters.filter(function (row) { return id(row.UserID) === f.uid && row['Character Slot'] === slot; }).length !== 1) errors.push('พบตัวละครซ้ำในสลอตเดียวกัน');
   var nameChanged = !!f.name && f.name !== String(target['Character Name']);
   var faceChanged = !!f.faceclaim && f.faceclaim !== String(target['Character Faceclaim'] || '');

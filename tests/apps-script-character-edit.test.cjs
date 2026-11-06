@@ -73,15 +73,43 @@ test('copy preview reads contiguous native header prefixes and rejects required 
 });
 
 test('sub rename and main face change touch Characters and log only; combined type follows actual changes', () => {
-  const f = fixture();
   for (const values of [{ charId: 'C-42-02', name: 'New Sub' }, { faceclaim: 'New Face' }]) {
+    const f = fixture();
+    if (values.charId === 'C-42-02') {
+      f.snapshot[1].values[1][6] = false;
+      f.snapshot[1].values[2][6] = true;
+      f.snapshot[2].values[1][4] = 'SUB 1';
+    }
     const plan = f.plan(values);
     assert.equal(plan.errors.length, 0);
     assert.deepEqual(Array.from(plan.changes, c => c.sheet), ['Characters', 'log ลงทะเบียนตัวละคร']);
   }
+  const f = fixture();
   assert.equal(f.plan({ name: 'New Main', faceclaim: 'New Face' }).changes.at(-1).fields.Type, 'เปลี่ยนชื่อ+เมจ');
   assert.equal(f.plan({ name: 'Main Name', faceclaim: 'New Face' }).changes.at(-1).fields.Type, 'เปลี่ยนเมจ');
   assert.ok(f.plan({ name: 'Main Name', faceclaim: 'Main Face' }).errors.length);
+});
+
+test('only the current character can be edited and both sources of active state must agree', () => {
+  const f = fixture();
+  for (const values of [{ name: 'Other Sub' }, { faceclaim: 'Unused Face' }]) {
+    const result = f.plan({ charId: 'C-42-02', ...values });
+    assert.ok(result.errors.some(e => e.includes('เฉพาะตัวละครที่กำลังใช้งาน')));
+    assert.equal(result.changes.length, 0);
+  }
+  for (const mutate of [
+    f => { f.snapshot[1].values[1][6] = false; },
+    f => { f.snapshot[1].values[2][6] = true; },
+    f => { f.snapshot[2].values[1][4] = 'SUB 1'; }
+  ]) {
+    const broken = fixture(); mutate(broken);
+    assert.equal(broken.plan({ name: 'New' }).changes.length, 0);
+  }
+  f.snapshot[1].values[1][6] = false;
+  f.snapshot[1].values[2][6] = true;
+  f.snapshot[2].values[1][4] = 'SUB 1';
+  assert.equal(f.plan({ charId: 'C-42-02', faceclaim: 'Unused Face' }).errors.length, 0);
+  assert.equal(f.plan({ name: 'Inactive Main' }).changes.length, 0);
 });
 
 test('foreign/archived IDs, missing or duplicate accounts, bad slots/date and wrong types fail closed', () => {
@@ -137,6 +165,14 @@ test('edit preview uses the shared ownership, stale-snapshot and durable-receipt
   });
   const plan = f.context.prepareRegistrationWriteTest({ ...f.input, name: 'New' }, 'Admin', 'edit');
   const request = { requestId: plan.requestId, previewToken: plan.previewToken };
+  f.snapshot[1].values[1][6] = false;
+  f.snapshot[1].values[2][6] = true;
+  f.snapshot[2].values[1][4] = 'SUB 1';
+  assert.throws(() => f.context.commitRegistrationWriteTest(request), /เฉพาะตัวละครที่กำลังใช้งาน/);
+  assert.equal(count, 0);
+  f.snapshot[1].values[1][6] = true;
+  f.snapshot[1].values[2][6] = false;
+  f.snapshot[2].values[1][4] = 'MAIN';
   owner = 'session-2';
   assert.throws(() => f.context.commitRegistrationWriteTest(request), /ไม่ตรงกัน/);
   owner = 'session-1';
