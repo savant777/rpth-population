@@ -40,7 +40,7 @@
 3. Render ตรวจ session ทุกคำสั่ง bootstrap / preview / commit ตรวจ exact Origin ที่อนุญาตและใช้ JSON ไม่ใช้ cookie ข้ามไซต์
 4. Render ลงลายเซ็น HMAC-SHA256 ด้วย secret จาก environment ส่ง nonce, เวลา, บัญชี Admin และ owner hash ของเซสชันไป Apps Script; Apps Script ตรวจลายเซ็นและอายุคำขอก่อนอ่านข้อมูล owner hash ใช้ตรวจสิทธิ์คำขอ ไม่ใช่ชื่อบุคคล
 5. อ่าน/สรุป/บันทึกจำกัดเฉพาะ spreadsheet ID ของสำเนาที่ตกลง ทุกคำสั่งเขียนคำนวณจากข้อมูลสดฝั่ง Apps Script ไม่รับ patches จาก browser ไปเขียนทันที
-6. Live mode เปิด register / edit / npc / race งานอื่นถูกปฏิเสธทั้ง Render และ Apps Script ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว
+6. Live mode เปิดเฉพาะรายการใน supportedActions ที่ Render/Apps Script รองรับตรงกัน ไม่มี fallback เป็นโมเดลทดลองเมื่อ API ล้มเหลว อัปเดต7พ.ย.: register/edit/npc/race/sub/switch ผ่านออนไลน์แล้ว main ขึ้นv12/Render855d778และกำลังทดสอบ (ดูผลล่าสุดใน CODEX_HANDOFF.md)
 
 ## การยืนยันบันทึก
 
@@ -63,6 +63,6 @@ Preview token เก็บ input/เจ้าของคำขอ/ชื่อ�
 1. ตั้งค่า Render environment และ password hash โดยผู้ดูแล ไม่ส่ง secrets มาในแชต
 2. ตั้ง apiBase เป็น Render URL แล้วทดสอบ login → bootstrap → preview → commit จาก GitHub Pages บนชีตสำเนา
 3. ทดสอบข้อมูลซ้ำ สรุปเก่า ส่งคำขอซ้ำ และเครือข่ายขาดในเส้นทางออนไลน์
-4. ต่อ flow อื่นตามลำดับใน admin-flow.md โดยยืนยันกติกาที่ยังค้างก่อนเขียนจริง เช่น Type นับต่อ/ยกเลิกล็อก ช่องตรวจ Inactive โควตาพิเศษ และลิงก์เมื่อเปลี่ยน MAIN
+4. ต่อ flow อื่นตามลำดับใน admin-flow.md กติกา Typeนับต่อ/ยกเลิก, flagsInactive, โควตาพิเศษและลิงก์MAIN ได้ยืนยันแล้ว6พ.ย. ไม่ถามซ้ำ อ่าน native contract และผลทดสอบล่าสุดก่อนเขียน; หากมีกรณีที่ยังไม่ตกลงจริงให้หยุดเฉพาะกรณีนั้น
 
 Tests และเครื่องมือตรวจ XLSX ถูกเก็บขึ้น Git ในรอบส่งมอบ เพื่อให้เครื่องใหม่ตรวจงานได้ Source Apps Script สร้างเป็น Code.gs รวมด้วย `npm run build:apps-script` ผล build ใน local-delivery/ ไม่ขึ้น Git Tests จำลองไม่แทนการทดสอบกรณีผิดพลาดบน Render + Apps Script จริง

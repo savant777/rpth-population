@@ -35,9 +35,14 @@ function seedSwitchQaLocks() {
 function inspectSwitchQaResults() {
   var book = SpreadsheetApp.getActiveSpreadsheet();
   if (!book || book.getId() !== '1jR8P-z62t3I95hNCkBBvzUsSA9kwHsD9w5Lo0jlX2QY') throw new Error('Test copy only');
-  [['Characters',0],['Player',0],['log ลงทะเบียนตัวละคร',1],['log เฟซเคลมล็อก',4],['Faceclaim Locks',1],['Public Player',0],['Public Faceclaim Locks',0]].forEach(function (definition) {
+  [['Users',0],['Characters',0],['Player',0],['log ลงทะเบียนตัวละคร',1],['log เฟซเคลมล็อก',4],['Faceclaim Locks',1],['Public Player',0],['Public Faceclaim Locks',0]].forEach(function (definition) {
     var sheet = book.getSheetByName(definition[0]), rows = sheet.getDataRange().getDisplayValues();
     var matches = rows.slice(1).map(function (r,i) { return {row:i+2,values:r}; }).filter(function (r) { return r.values[definition[1]] === '99061101'; });
-    console.log(JSON.stringify({sheet:definition[0],rows:matches.slice(-8)}));
+    var result = {sheet:definition[0],rows:matches.slice(-8)};
+    if (definition[0] === 'Characters') result.slotRules = matches.map(function (r) {
+      var rule = sheet.getRange(r.row,4).getDataValidation();
+      return {row:r.row,type:rule && String(rule.getCriteriaType()),options:rule && String(rule.getCriteriaType()) === 'VALUE_IN_LIST' ? rule.getCriteriaValues()[0] : []};
+    });
+    console.log(JSON.stringify(result));
   });
 }

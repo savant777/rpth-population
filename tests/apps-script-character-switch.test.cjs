@@ -60,7 +60,7 @@ test('blank face on native continuation retains original right; UID transfer acr
   assert.equal(log.values.at(-1)[6],'');pause[4]=99;assert.ok(f.plan().errors.some(e=>e.includes('เจ้าของ')));
 });
 test('reject current/foreign/retired target, invalid active source, conflicts, duplicate post and out of order dates',()=>{
-  for(const values of [{charId:'C-42-01'},{charId:'C-42-09'},{charId:'C-99-01'},{faceclaim:'NPC Face'},{faceclaim:'Main Face'},{date:'31/02/2026'},{date:'08/11/2026'},{post:'1'}])assert.ok(fixture().plan('switch',values).errors.length);
+  for(const values of [{charId:'C-42-01'},{charId:'C-42-09'},{charId:'C-99-01'},{faceclaim:'NPC Face'},{date:'31/02/2026'},{date:'08/11/2026'},{post:'1'}])assert.ok(fixture().plan('switch',values).errors.length);
   const f=fixture();f.table('Player').values[1][4]='SUB 1';assert.ok(f.plan().errors.length);
   const g=fixture();g.table('Characters').values[2][6]=true;assert.ok(g.plan().errors.length);
   const h=fixture();h.event('C-42-02','Sub Face','กำลังนับ','2026-11-07');assert.ok(h.plan().errors.some(e=>e.includes('คงเหลือ')));
@@ -114,6 +114,17 @@ test('new MAIN while using MAIN creates new ID/link, keeps old MAIN in a free su
   assert.equal(p.changes.find(c=>c.sheet==='Users').fields.Username,'New Sub');
   const b=f.context.buildRegistrationBatch_(p,f.snapshot);assert.deepEqual(Array.from(b.rows['log ลงทะเบียนตัวละคร']),[3,4]);
   assert.equal(b.requests.filter(r=>r.copyPaste?.pasteType==='PASTE_FORMULA'&&r.copyPaste.destination.sheetId===4).length,2);
+});
+test('unlocked current face transfers only with source clearing in the same switch/sub/main batch',()=>{
+  for(const [action,extra]of [['switch',{}],['sub',{}],['main',{mainMode:'new',keepMain:true}],['main',{mainMode:'new',keepMain:false}]]){
+    const f=fixture(),p=f.plan(action,{faceclaim:'Main Face',...extra});assert.deepEqual(Array.from(p.errors),[]);
+    assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===2).fields['Character Faceclaim'],'');
+    assert.equal(p.changes.find(c=>c.sheet==='Characters'&&(c.row===3||!c.row)).fields['Character Faceclaim'],'Main Face');
+    const batch=f.context.buildRegistrationBatch_(p,f.snapshot);assert.ok(batch.expected.some(e=>e.sheet==='Characters'&&e.row===2&&e.fields[4]===''));
+    const protectedFixture=fixture();protectedFixture.event('C-42-01','Main Face','พักนับ','');assert.ok(protectedFixture.plan(action,{faceclaim:'Main Face',...extra}).errors.length);
+  }
+  const f=fixture();f.table('Characters').values.push([99,'C-99-01','Other','MAIN','Main Face','',false]);f.table('Characters').formulas.push(f.table('Characters').formulas[1].slice());assert.ok(f.plan('switch',{faceclaim:'Main Face'}).errors.length);
+  const g=fixture();g.table('NPC').values.push(['b','Other NPC','Main Face']);g.table('NPC').formulas.push(['','','']);assert.ok(g.plan('main',{mainMode:'new',keepMain:true,faceclaim:'Main Face'}).errors.length);
 });
 test('promotion applies only to current SUB, retains ID/link/face and moves old MAIN into the freed slot without restarting paused lock',()=>{
   const f=fixture();f.table('Characters').values[1][6]=false;f.table('Characters').values[1][4]='';f.table('Characters').values[2][6]=true;f.table('Characters').values[2][4]='Sub Face';f.table('Player').values[1][4]='SUB 1';f.event('C-42-02','Sub Face','พักนับ','');

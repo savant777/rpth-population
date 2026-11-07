@@ -1,10 +1,22 @@
 # ส่งมอบงานให้ Codex อีกเครื่อง
 
-## 7 พฤศจิกายน — กำลังต่อฟอร์มเปลี่ยน MAIN
+## 8 พฤศจิกายน — กติกาใช้เฟซเคลมเดิม ยืนยันแล้ว
 
-ขยาย shared CharacterSwitch planner/writer รองรับmainแล้ว local86/86 (tracked71+local15) builder36functionsผ่าน: newMAINได้IDใหม่+URLใหม่, promoteเฉพาะSUBที่activeคงID/URL/เมจ, Users/Playerชื่อMAINsync, logmain NEW→MAIN FALSEเมื่อใช้MAINเดิม/SUB→MAIN TRUEเมื่อใช้SUB, logย้ายMAINเก่าแถวสอง FALSE, keep/retire/replacementเลือกชัดเจนและblockretireตัวมีlock, copylognativeLและคงสูตรfeeเดิม ผู้ดูแลอนุญาตทำต่อแล้ว กำลังdeploy/ทดสอบออนไลน์ ห้ามอ้างว่าฟอร์มMAINผ่านออนไลน์ก่อนมีใบรับ
+ผู้ดูแลตอบอนุญาต: สลับไปอีกตัว/เพิ่มตัวรอง/สร้าง MAIN ใหม่ ใช้เมจเดียวกับตัวปัจจุบันได้ ถ้าเมจนั้นไม่มีสิทธิ์ล็อกและล้างเมจต้นทางใน atomic batch เดียวกัน แก้ CharacterSwitch.gs ให้ยกเว้น duplicate เฉพาะแถวcurrentที่กำลังclear ไม่ยกเว้นผู้ใช้อื่น/NPC/สิทธิ์ล็อกของตัวอื่น ไม่โอนล็อก Tests87/87 (tracked72+local15) build36functionsผ่าน รวม switch/sub/newMAIN keep/retire และ locked/other-owner/NPC reject
+
+**ยังไม่ deploy กติกานี้:** รอบ8พ.ย.เครื่องมือ CUA เห็นเฉพาะ IAB/MCP Apps ไม่มี Chrome extension จึงยังเข้า AppsScript/Admin ที่ผู้ดูแลloginไว้ไม่ได้ ขอผู้ดูแลเชื่อมChromeแล้ว (คำถามasyncChromeพร้อม) ออนไลน์ยังv12/source855d778 ต้องวางbundleใหม่และอัปเดต deployment URLเดิม ไม่ต้องrestartRenderเพราะแก้gs-only และไม่เปลี่ยนsecret อย่าอ้างว่าเมจเดิมผ่านGoogleออนไลน์แล้ว
+
+## 7 พฤศจิกายน — ฟอร์มเปลี่ยน MAIN ผ่านออนไลน์แล้ว
+
+ขยาย shared CharacterSwitch planner/writer รองรับmainแล้ว local86/86 (tracked71+local15) builder36functionsผ่าน source855d778 pushแล้ว AppsScript v12/Render855d778 Live URLเดิม ผู้ดูแลloginใหม่แล้ว: newMAINได้IDใหม่+URLใหม่, promoteเฉพาะSUBที่activeคงID/URL/เมจ, Users/Playerชื่อMAINsync, logmain NEW→MAIN FALSEเมื่อใช้MAINเดิม/SUB→MAIN TRUEเมื่อใช้SUB, logย้ายMAINเก่าแถวสอง FALSE, keep/retire/replacementเลือกชัดเจนและblockretireตัวมีlock, copylognativeLและคงสูตรfeeเดิม
 
 Native Characters D2ไม่มี'-' จึงwriterเพิ่มตัวเลือกนี้เฉพาะเซลล์Dของแถวretire (strictlistตัวเลือกเดิม+'-') ไม่ขยายdropdownทั้งคอลัมน์; row2templateคงเดิม ไม่แตะsummaryหรือชีตหลัก UIliveไม่มีcheckboxextraที่ไม่มีปลายทาง และhideตัวเลือกreplacementเมื่อpromoteเพราะใช้สลอตที่เพิ่งว่าง
+
+ผ่านออนไลน์แล้ว: สร้างMAINใหม่จากMAINเก็บตัวเดิม (ID04), promote currentSUB2(ID03), สร้างMAINใหม่จากSUBไม่เก็บMAINเดิม (ID05/retire03), สลอตเต็มเลือกแทนที่ตัวไม่มีล็อก (ID06/retire04/oldMAIN05→SUB2), และคืนตัวเดิมID01เป็นMAINซึ่งกำลังพักนับอยู่โดยไม่เพิ่มpause/resumeซ้ำ ทุกใบรับverificationok รายละเอียดrequestIdsในdocs/admin-test-matrix.md; negativepromoteขณะใช้MAIN/ไม่เลือกreplacementเมื่อเต็ม/เลือกตัวมีล็อก ถูกserverปฏิเสธไม่เขียน
+
+NativeInspectorยืนยันfeeครั้งแรก1/0, ครั้งสอง2/5000, หลังreplacement4/5000 และfinal5/5000 ซึ่งเป็นประวัติQAสังเคราะห์เท่านั้น ไม่resetลบlog. สถานะQA99061101สุดท้าย: Users357/Player296ชื่อRPTH QA 20261106 A/MAIN active/raceมนุษย์/checkTRUE TRUE FALSE/exempt06/02/2027/usage2,0; Characters406ID01MAINtruefaceเดิม,407ID02SUB1falseคงlockedface,408ID03'-'falseเมจว่างURLrootเดิม,409ID04'-'falseเมจว่างURL?qa-main=Aเดิม,410ID05SUB2falseเมจว่างURL?qa-main=B,411ID06SUB3falseเมจว่างURL?qa-main=C. D408/D409มี'-'เพิ่มเฉพาะเซลล์ ตัวเลือกเซลล์อื่นคงเดิม. Native/Public locksMAINพัก365วัน Start07/11/2026 PreviousEnd07/11/2027, SUB1นับถึง07/11/2027; event31พักตอนswitchกลับตัวID01และไม่มีeventซ้ำตอนpromote Logทะเบียน1184ท้ายสุด. ล้างdraftmain/switch เปิดmainว่างพร้อมตรวจ รูป/ผลlocal-delivery/main-*. UI backlogเพิ่ม010/011รวม11ข้อ เก็บไว้ท้ายสุด
+
+คำถามเมจเดิมได้รับคำตอบอนุญาตแล้ว ดูหัวข้อ8พ.ย. ไม่ถามซ้ำ งานหลักที่เหลือถัดไปล็อก/ต่ออายุ+editที่มีล็อก, reclaim, inactive ใช้สำเนาเดิมและไม่เดากติกา
 
 ## 7 พฤศจิกายน — เพิ่มตัวรอง/สลับใช้งาน พร้อมให้ตรวจบนสำเนา
 

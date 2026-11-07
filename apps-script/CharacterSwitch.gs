@@ -125,7 +125,10 @@ function planCharacterSwitch_(input, action, snapshot, slots, today) {
   var outgoing = liveLocks.filter(function (r) { return own(r, current, current['Character Faceclaim']); });
   var incoming = liveLocks.filter(function (r) { return own(r, target, f.faceclaim); });
   if (outgoing.length > 1 || incoming.length > 1) errors.push('พบสิทธิ์ล็อกซ้ำของตัวละครเดียวกัน');
-  if (tables.Characters.some(function (r) { return r.CharID !== target.CharID && r['Character Slot'] !== '-' && norm(r['Character Faceclaim']) === norm(f.faceclaim); }) || tables.NPC.some(function (r) { return norm(r.Faceclaim) === norm(f.faceclaim); })) errors.push('เฟซเคลมนี้มีผู้ใช้งานในทะเบียนแล้ว');
+  // Confirmed 2026-11-08: an unlocked face can move from the current character
+  // only because this same atomic plan clears that exact source row.
+  var releasesCurrentFace = !promote && outgoing.length === 0;
+  if (tables.Characters.some(function (r) { return r.CharID !== target.CharID && r['Character Slot'] !== '-' && norm(r['Character Faceclaim']) === norm(f.faceclaim) && !(r.row === current.row && releasesCurrentFace); }) || tables.NPC.some(function (r) { return norm(r.Faceclaim) === norm(f.faceclaim); })) errors.push('เฟซเคลมนี้มีผู้ใช้งานในทะเบียนแล้ว');
   if (liveLocks.some(function (r) { return norm(r['Lock Face Claim']) === norm(f.faceclaim) && !own(r, target, f.faceclaim); })) errors.push('เฟซเคลมนี้มีสิทธิ์ล็อกของตัวละครอื่น');
   var targetOther = liveLocks.filter(function (r) { return id(r.UserID) === f.uid && r.CharID === target.CharID && !own(r, target, f.faceclaim); });
   if (targetOther.some(function (r) { return r['State After Event'] === 'พักนับ'; })) errors.push('ตัวปลายทางมีสิทธิ์พักนับอีกเฟซเคลม กรุณาจัดการสิทธิ์เดิมก่อนสลับ');

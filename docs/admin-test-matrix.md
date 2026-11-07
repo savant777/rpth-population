@@ -10,7 +10,7 @@
 | 2 | เปลี่ยนชื่อ/เฟซเคลม | deploy/ทดสอบออนไลน์กรณีปกติแล้ว พร้อมให้ตรวจ; การเชื่อมล็อกยังรอขั้น6 |
 | 3 | เพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ | deploy และทดสอบออนไลน์แล้ว พร้อมให้ผู้ดูแลตรวจบนสำเนา |
 | 4 | เพิ่มตัวรอง / สลับตัวละคร | deployและทดสอบออนไลน์แล้ว พร้อมให้ตรวจบนสำเนา; local81/81, Apps Script v11/Render40b0b0f |
-| 5 | เปลี่ยน MAIN | server/shared atomic writerพร้อม local86/86; กำลังdeployและทดสอบออนไลน์ |
+| 5 | เปลี่ยน MAIN | v12/Render855d778 ผ่านออนไลน์ new/promote/keep/retire/replacement; กติกาเมจเดิมยืนยันแล้ว local87/87 แต่ยังรอdeploygsเมื่อChromeเชื่อมกลับ |
 | 6 | ล็อก/ต่ออายุ/พักนับ/นับต่อ | อ่าน native L:Q ครบแล้ว; auto pause/resume เชื่อมกับ switch แล้ว ยังต้องทำฟอร์มซื้อ/ต่ออายุและทดสอบออนไลน์ |
 | 7 | Reclaim ผ่าน/ไม่ผ่าน | มี demo model; ยังไม่มี live server flow |
 | 8 | Inactive หลายคน | มี demo model; flags/ยกเลิกล็อกยืนยันแล้ว ต้องพัฒนา server |
@@ -38,6 +38,20 @@ Local casesเพิ่ม9ข้อ: slot/ID allocationไม่ใช้ retir
 เพิ่มอีก1testเรื่อง native log อนุญาต Gว่างในเหตุการณ์ต่อมา จึง resolveเฟซจากเริ่มล็อก และต้องคงUID/CharIDเดิมข้ามทุกเหตุการณ์ (native Checkเองยังไม่ตรวจUID) รวม81testsผ่าน builder36functions การแก้นี้เป็น gs-only ไม่ต้อง restartRender/session
 
 ผลfinal read-only inspectorหลังv11commit: Characters406 TRUE/407FALSEคงเมจ/408FALSEเมจว่าง ทั้งสามURLคงเดิม; PublicPlayer MAIN TRUE usage2/0 Exempt06/02/2027; PublicLocksMAINพัก365วัน Start07/11/2026 PreviousEnd07/11/2027, SUB1นับถึง07/11/2027 ไม่มีformulaerrors NativeCheckOKถึงevent29. ล้างdraftsub/switchแล้ว เปิดsubว่างพร้อมตรวจ ถัดไปฟอร์มMAIN
+
+## เปลี่ยน MAIN — 7 พฤศจิกายน
+
+Source855d778, Apps Script v12 URLเดิม, Render Live ผู้ดูแลloginใหม่ให้แล้ว QA99061101ก่อนทดสอบ Users357/Player296 ชื่อเดิม activeMAIN, Main Char Change=0/Fee=0. Local86/86ผ่าน ครอบคลุมnewMAINทั้งMAIN/SUB, promoteเฉพาะcurrent, keep/retire, full-slotreplacementรวมกรณีทับcurrent, lockedretireถูกblock, ID/URLคงเดิมและไม่reuse, usageFALSE/TRUEแถวหลักและFALSEแถวmove, logสองแถวatomic, retiredvalidation'-'เฉพาะเซลล์. ผลออนไลน์ตามด้านล่าง
+
+ผลออนไลน์เริ่มต้น: สร้าง MAIN ใหม่เก็บตัวเดิม request a734e6f8-f4e3-45ee-b7b0-0b0665e59ab9, Characters409 ID04 MAIN URL?qa-main=A, ตัวเดิม406→SUB3 คงเมจlocked, Users357/Player296ชื่อMAINใหม่, log1173 NEW→MAIN FALSE/log1174moveMAIN→SUB3 FALSE, lockevent30resumeเดิม, readback7แถวผ่านทั้งหมด. NativeInspectorยืนยัน Users/Playerชื่อใหม่ MainCharChange1 Fee0. Promoteขณะยังใช้MAINถูกserverปฏิเสธ. สลับไปSUB2ก่อนpromote requestbad16c04-c9c7-48a7-8541-07b3048e62d8 log1175 readbackผ่าน
+
+Promote SUB2→MAIN requestda7f81eb-1083-4864-b6af-7343ee8db726 log1176/1177 readback6แถวผ่าน: ID03เดิมเป็นMAIN, ID04→SUB2, URLของแต่ละตัวคงเดิม NativeFee2ครั้ง/5000. จากนั้นสลับไปใช้ID04 SUB2 แล้วสร้างMAINใหม่ไม่เก็บตัวเดิม requestb0ce2393-7474-4e92-9263-24e3d00277ff log1179 SUB2→MAIN TRUE, Characters410 ID05ใหม่ URL?qa-main=B, Characters408 ID03→'-'/FALSE/เมจว่างแต่URLเดิมอยู่, readback6แถวผ่าน. InspectorยืนยันเฉพาะD408มีตัวเลือก'-'เพิ่ม ส่วนD406/407/409/410เดิมไม่เปลี่ยน. กรณีสร้างMAINเก็บตัวเดิมเมื่อสลอตเต็มแต่ไม่เลือกreplacementถูกserverปฏิเสธ
+
+เลือกreplacementเป็นID01ที่มีล็อกถูกserverปฏิเสธโดยไม่มีการเขียน จากนั้นเลือกID04ที่ไม่มีล็อก requestb3306504-b26c-4ac7-b164-16ba07b14678 สำเร็จ: ID04row409เก็บ'-'/FALSE/เมจว่าง URL?qa-main=Aเดิม, ID05row410→SUB2 URL?qa-main=Bเดิม, ID06row411MAIN URL?qa-main=Cใหม่, Users357/Player296ชื่อC, log1180 NEW→MAIN FALSE/log1181moveMAIN→SUB2 FALSE, readback7แถวผ่าน NativeCount4/Fee5000. สลับเตรียมก่อนretireโพสต์99061154 request75cbf98d-e17c-4590-b7c8-3d168b09f8e6 log1178ผ่าน
+
+คืนตัวเดิม: switch request36e68b8d-08f9-4c75-9e6b-3e2edc4b41ef log1182/event31pauseID01; promote requesta40d7772-98a8-4416-94b8-e291b1725139 log1183/1184 ไม่มีlockeventซ้ำ readbackผ่าน. FinalNative Users/Playerชื่อเดิม MAIN/usage2,0/exempt06/02/2027/MainCount5/Fee5000, archivedID03/04และURLคงอยู่, ID05SUB2/ID06SUB3, PublicLocksMAINpause365/SUB1countingถึง07/11/2027ตรงกัน เก็บQAประวัติทั้งหมด ไม่resetfeeหรือลบlog. ภาพ/ใบรับ/รายงาน local-delivery/main-*. UIเพิ่ม010/011รวม11รายการ
+
+8พ.ย. ผู้ดูแลอนุญาตใช้เมจเดิมที่ไม่ล็อกเมื่อclearcurrentในbatchเดียวกัน เพิ่มtest switch/sub/mainkeep/mainretireผ่านและยังrejectlocked/ผู้ใช้อื่น/NPC รวม87/87 buildผ่าน แต่ยังไม่deployหรือทดสอบGoogleออนไลน์เพราะChromeextensionยังไม่เชื่อมต่อ
 
 ## รายการทดสอบร่วมทุกฟอร์ม
 
