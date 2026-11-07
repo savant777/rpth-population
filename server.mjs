@@ -59,7 +59,7 @@ export function createApp({ passwordHash = process.env.RPTH_ADMIN_PASSWORD_HASH,
         const session = auth.session(token);
         if (!session) return json(401, { error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' });
         if (route === 'verify') return json(200, { session: publicSession(session) });
-        if (route === 'preview' && !['register', 'edit', 'npc', 'race', 'sub', 'switch'].includes(input.action)) return json(400, { error: 'ฟอร์มนี้ยังไม่รองรับการบันทึก' });
+        if (route === 'preview' && !['register', 'edit', 'npc', 'race', 'sub', 'switch', 'main'].includes(input.action)) return json(400, { error: 'ฟอร์มนี้ยังไม่รองรับการบันทึก' });
         const owner = createHash('sha256').update(token).digest('hex');
         try {
           const data = await gateway.call(route === 'bootstrap' ? 'bootstrap' : route, input, { operator: session.operator, owner });

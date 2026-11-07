@@ -85,6 +85,6 @@ function previewRegistryAction_(input, action) {
   if (!action || action === 'register') return previewNewPlayerInCopy(input);
   if (action === 'edit') return previewCharacterEditInCopy_(input);
   if (action === 'npc' || action === 'race') return previewOtherRegistryForm_(input, action);
-  if (action === 'sub' || action === 'switch') return previewCharacterSwitchInCopy_(input, action);
+  if (action === 'sub' || action === 'switch' || action === 'main') return previewCharacterSwitchInCopy_(input, action);
   throw new Error('ฟอร์มนี้ยังไม่รองรับการบันทึก');
 }

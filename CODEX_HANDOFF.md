@@ -1,5 +1,11 @@
 # ส่งมอบงานให้ Codex อีกเครื่อง
 
+## 7 พฤศจิกายน — กำลังต่อฟอร์มเปลี่ยน MAIN
+
+ขยาย shared CharacterSwitch planner/writer รองรับmainแล้ว local86/86 (tracked71+local15) builder36functionsผ่าน: newMAINได้IDใหม่+URLใหม่, promoteเฉพาะSUBที่activeคงID/URL/เมจ, Users/Playerชื่อMAINsync, logmain NEW→MAIN FALSEเมื่อใช้MAINเดิม/SUB→MAIN TRUEเมื่อใช้SUB, logย้ายMAINเก่าแถวสอง FALSE, keep/retire/replacementเลือกชัดเจนและblockretireตัวมีlock, copylognativeLและคงสูตรfeeเดิม ผู้ดูแลอนุญาตทำต่อแล้ว กำลังdeploy/ทดสอบออนไลน์ ห้ามอ้างว่าฟอร์มMAINผ่านออนไลน์ก่อนมีใบรับ
+
+Native Characters D2ไม่มี'-' จึงwriterเพิ่มตัวเลือกนี้เฉพาะเซลล์Dของแถวretire (strictlistตัวเลือกเดิม+'-') ไม่ขยายdropdownทั้งคอลัมน์; row2templateคงเดิม ไม่แตะsummaryหรือชีตหลัก UIliveไม่มีcheckboxextraที่ไม่มีปลายทาง และhideตัวเลือกreplacementเมื่อpromoteเพราะใช้สลอตที่เพิ่งว่าง
+
 ## 7 พฤศจิกายน — เพิ่มตัวรอง/สลับใช้งาน พร้อมให้ตรวจบนสำเนา
 
 อ่าน native L:Q ครบแล้วด้วย InspectSwitchCopy.gs ที่เพิ่มเป็นไฟล์ diagnostic แยกใน Apps Script เดิม ไม่แก้ properties/manifest/ชีต รายละเอียด `docs/native-switch-schema.md` และรายงาน local ignored `local-delivery/switch-native-log.txt` พบ Player รองรับ SUB1–3 แต่ Characters ถึง SUB6 จึงใช้ intersection ไม่ขยาย validation เอง; pause ต้อง End > วันพักตาม native Check ไม่เดากติกา zero-day

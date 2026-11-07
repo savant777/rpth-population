@@ -1,15 +1,19 @@
 // Uses the existing locked, signed, stale-checked, atomic commit and receipt protocol.
 function buildCharacterSwitchBatch_(plan, snapshot) {
-  if (plan.errors.length || ['sub', 'switch'].indexOf(plan.action) < 0 || plan.changes.length < 4 || plan.changes.length > 6) throw new Error('แผนสลับใช้งานไม่ถูกต้อง');
+  var mainAction = plan.action === 'main';
+  if (plan.errors.length || ['sub', 'switch', 'main'].indexOf(plan.action) < 0 || plan.changes.length < (mainAction ? 5 : 4) || plan.changes.length > (mainAction ? 9 : 6)) throw new Error('แผนสลับใช้งานไม่ถูกต้อง');
   var requests = [], rows = {}, expected = [], next = {};
   var schema = {
-    Characters: { width: 7, formulas: [], edits: ['Is Active Character', 'Character Faceclaim'], append: plan.action === 'sub' },
-    Player: { width: 23, formulas: [], edits: ['Active Character'] },
+    Characters: { width: 7, formulas: [], edits: mainAction ? ['Is Active Character', 'Character Faceclaim', 'Character Slot'] : ['Is Active Character', 'Character Faceclaim'], append: plan.action === 'sub' || mainAction },
+    Player: { width: 23, formulas: [], edits: mainAction ? ['Active Character', 'Display Name'] : ['Active Character'] },
     'log ลงทะเบียนตัวละคร': { width: 13, formulas: [11], append: true },
     'log เฟซเคลมล็อก': { width: 17, formulas: [11, 12, 13, 14, 15, 16], append: true }
   };
+  if (mainAction) schema.Users = { width: 4, formulas: [], edits: ['Username'] };
   var edits = plan.changes.filter(function (c) { return c.row != null; });
-  if (edits.filter(function (c) { return c.sheet === 'Characters'; }).length !== (plan.action === 'sub' ? 1 : 2) || edits.filter(function (c) { return c.sheet === 'Player'; }).length !== 1 || plan.changes.filter(function (c) { return c.sheet === 'log ลงทะเบียนตัวละคร' && c.row == null; }).length !== 1) throw new Error('ปลายทางแผนไม่ครบ');
+  var charEdits = edits.filter(function (c) { return c.sheet === 'Characters'; }).length;
+  var logs = plan.changes.filter(function (c) { return c.sheet === 'log ลงทะเบียนตัวละคร' && c.row == null; }).length;
+  if ((mainAction ? charEdits < 1 || charEdits > 3 || logs < 1 || logs > 2 || edits.filter(function (c) { return c.sheet === 'Users'; }).length !== 1 : charEdits !== (plan.action === 'sub' ? 1 : 2) || logs !== 1) || edits.filter(function (c) { return c.sheet === 'Player'; }).length !== 1) throw new Error('ปลายทางแผนไม่ครบ');
   plan.changes.forEach(function (change) {
     var policy = schema[change.sheet], table = snapshot.filter(function (t) { return t.name === change.sheet; })[0];
     if (!policy || !table || table.values[0].length !== policy.width) throw new Error('โครงสร้างปลายทางไม่ถูกต้อง');
@@ -53,18 +57,25 @@ function buildCharacterSwitchBatch_(plan, snapshot) {
       } else if (field === 'UserID' || field === 'logID (#Post)') { value = Number(value); entered = { numberValue: value }; }
       else if (typeof value === 'boolean') entered = { boolValue: value };
       else { value = String(value); entered = { stringValue: value }; }
+      if (mainAction && change.sheet === 'Characters' && field === 'Character Slot' && value === '-') {
+        var options = plan.characterSlotOptions;
+        if (!Array.isArray(options) || options.indexOf('MAIN') < 0 || options.some(function (slot) { return !/^(MAIN|SUB [1-9][0-9]*|-)$/.test(slot); })) throw new Error('ไม่พบตัวเลือกสลอต native สำหรับเก็บประวัติ');
+        // The agreed retired marker is not in native D2 yet. Permit it only in
+        // the specific retired cell, preserving all existing native choices.
+        requests.push({ setDataValidation: { range: { sheetId: table.sheetId, startRowIndex: row - 1, endRowIndex: row, startColumnIndex: 3, endColumnIndex: 4 }, rule: { condition: { type: 'ONE_OF_LIST', values: options.concat(options.indexOf('-') < 0 ? ['-'] : []).map(function (slot) { return { userEnteredValue: slot }; }) }, strict: true, showCustomUi: true } } });
+      }
       check.fields[column] = value;
       requests.push({ updateCells: { start: { sheetId: table.sheetId, rowIndex: row - 1, columnIndex: column }, rows: [{ values: [{ userEnteredValue: entered }] }], fields: 'userEnteredValue' } });
     });
     if (change.sheet === 'Characters') { check.fields[0] = Number(plan.uid); check.fields[1] = change.charId || plan.charId; }
-    if (change.sheet === 'Player') check.fields[0] = Number(plan.uid);
+    if (change.sheet === 'Player' || change.sheet === 'Users') check.fields[0] = Number(plan.uid);
     expected.push(check);
   });
   return { requests: requests, rows: rows, expected: expected };
 }
 
 function verifyCharacterSwitchReceipt_(book, receipt) {
-  var result = JSON.parse(JSON.stringify(receipt)), widths = { Characters: 'G', Player: 'W', 'log ลงทะเบียนตัวละคร': 'M', 'log เฟซเคลมล็อก': 'Q' };
+  var result = JSON.parse(JSON.stringify(receipt)), widths = { Users: 'D', Characters: 'G', Player: 'W', 'log ลงทะเบียนตัวละคร': 'M', 'log เฟซเคลมล็อก': 'Q' };
   try {
     var ranges = receipt.expected.map(function (e) { return "'" + e.sheet + "'!A" + e.row + ':' + widths[e.sheet] + e.row; });
     var values = Sheets.Spreadsheets.Values.batchGet(book.getId(), { ranges: ranges, valueRenderOption: 'UNFORMATTED_VALUE' }).valueRanges;

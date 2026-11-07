@@ -17,7 +17,7 @@ function fixture() {
   const snapshot = defs.map(([name,headers,data,formula],i)=>{const values=[headers,...data.map(r=>headers.map((_,c)=>r[c]??''))];if(values.length===1)values.push(headers.map(()=>''));return {name,sheetId:i+1,maxRows:1000,values,formulas:values.map((_,r)=>headers.map((_,c)=>r&&formula.includes(c)?'=native2':'')),formats:headers.map(()=> 'General')};});
   const table=name=>snapshot.find(t=>t.name===name);
   const input={uid:'42',charId:'C-42-02',post:'55',date:'07/11/2026',faceclaim:'Sub Face',name:'New Sub',url:'https://roleplayth.com/new',note:''};
-  const plan=(action='switch',values={})=>context.planCharacterSwitch_({...input,...values},action,snapshot,['MAIN','SUB 1','SUB 2','SUB 3'],'2026-11-07');
+  const plan=(action='switch',values={})=>{const result=context.planCharacterSwitch_({...input,...values},action,snapshot,['MAIN','SUB 1','SUB 2','SUB 3'],'2026-11-07');if(action==='main')result.characterSlotOptions=['MAIN','SUB 1','SUB 2','SUB 3','SUB 4','SUB 5','SUB 6'];return result;};
   const event=(charId,face,state,end='2026-12-01',lockId='L-42-01')=>{ const t=table('log เฟซเคลมล็อก');const r=['E-'+lockId,lockId,4,charId,42,charId,face,state==='พักนับ'?'พักนับ':'เริ่มล็อก','2026-10-01','', '',0,state,40,end,'OK',t.values.length+1]; if(!t.values[1][0]){t.values[1]=r;}else{t.values.push(r);t.formulas.push(t.formulas[1].slice());}return r;};
   return {context,snapshot,table,input,plan,event};
 }
@@ -101,4 +101,56 @@ test('switch shared commit includes lock snapshot freshness and durable retry af
   const fresh=f.context.prepareRegistrationWriteTest(f.input,'Admin','switch'),request={requestId:fresh.requestId,previewToken:fresh.previewToken};lose=true;
   assert.throws(()=>f.context.commitRegistrationWriteTest(request),/response lost/);assert.equal(batches,1);cache.clear();
   const receipt=f.context.commitRegistrationWriteTest(request);assert.equal(batches,1);assert.equal(receipt.expected.length,5);assert.equal(receipt.requestId,request.requestId);
+});
+test('new MAIN while using MAIN creates new ID/link, keeps old MAIN in a free sub slot and writes two same-post logs FALSE',()=>{
+  const f=fixture(),p=f.plan('main',{mainMode:'new',keepMain:true});assert.deepEqual(Array.from(p.errors),[]);
+  assert.equal(p.charId,'C-42-10');const added=p.changes.find(c=>c.sheet==='Characters'&&!c.row);
+  assert.equal(added.fields['Character Slot'],'MAIN');assert.equal(added.fields['Character Url'],f.input.url);
+  assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===2).fields['Character Slot'],'SUB 2');
+  const logs=p.changes.filter(c=>c.sheet==='log ลงทะเบียนตัวละคร');assert.equal(logs.length,2);
+  assert.equal(logs[0].fields.Type,'เปลี่ยนตัวละครหลัก');assert.equal(logs[0].fields['From Slot'],'NEW');assert.equal(logs[0].fields['Affects Usage'],false);
+  assert.equal(logs[1].fields['Affects Usage'],false);assert.equal(logs[1].fields['Old Name'],'Main');assert.equal(logs[1].fields['New Name'],'Main');
+  assert.equal(logs[1].fields['Old Face Claim'],'');assert.equal(logs[1].fields['New Face Claim'],'');
+  assert.equal(p.changes.find(c=>c.sheet==='Users').fields.Username,'New Sub');
+  const b=f.context.buildRegistrationBatch_(p,f.snapshot);assert.deepEqual(Array.from(b.rows['log ลงทะเบียนตัวละคร']),[3,4]);
+  assert.equal(b.requests.filter(r=>r.copyPaste?.pasteType==='PASTE_FORMULA'&&r.copyPaste.destination.sheetId===4).length,2);
+});
+test('promotion applies only to current SUB, retains ID/link/face and moves old MAIN into the freed slot without restarting paused lock',()=>{
+  const f=fixture();f.table('Characters').values[1][6]=false;f.table('Characters').values[1][4]='';f.table('Characters').values[2][6]=true;f.table('Characters').values[2][4]='Sub Face';f.table('Player').values[1][4]='SUB 1';f.event('C-42-02','Sub Face','พักนับ','');
+  const p=f.plan('main',{mainMode:'promote',keepMain:true,name:'Ignored',faceclaim:'Ignored',url:'https://ignored.test/'});assert.deepEqual(Array.from(p.errors),[]);
+  assert.equal(p.charId,'C-42-02');assert.ok(!p.changes.some(c=>c.sheet==='Characters'&&!c.row));
+  const target=p.changes.find(c=>c.sheet==='Characters'&&c.row===3);assert.equal(target.fields['Character Slot'],'MAIN');assert.equal(target.fields['Is Active Character'],true);
+  assert.equal(target.fields['Character Faceclaim'],undefined);assert.equal(target.fields['Character Url'],undefined);
+  assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===2).fields['Character Slot'],'SUB 1');
+  const log=p.changes.find(c=>c.sheet==='log ลงทะเบียนตัวละคร');assert.equal(log.fields['From Slot'],'SUB 1');assert.equal(log.fields['New Name'],'Sub');assert.equal(log.fields['New Face Claim'],'Sub Face');assert.equal(log.fields['Affects Usage'],true);
+  assert.ok(!p.changes.some(c=>c.sheet==='log เฟซเคลมล็อก'));assert.equal(p.changes.find(c=>c.sheet==='Users').fields.Username,'Sub');
+  assert.ok(f.context.buildRegistrationBatch_(p,f.snapshot).expected.length>=6);
+  assert.ok(f.plan('main',{mainMode:'promote',keepMain:true,charId:'C-42-01'}).errors.length);
+  assert.ok(fixture().plan('main',{mainMode:'promote',keepMain:true}).errors.length);
+});
+test('new MAIN from current SUB logs that SUB to MAIN TRUE and only resumes outgoing paused right',()=>{
+  const f=fixture();f.table('Characters').values[1][6]=false;f.table('Characters').values[1][4]='';f.table('Characters').values[2][6]=true;f.table('Characters').values[2][4]='Sub Face';f.table('Player').values[1][4]='SUB 1';f.event('C-42-02','Sub Face','พักนับ','');
+  const p=f.plan('main',{mainMode:'new',keepMain:true,faceclaim:'New Main Face'});assert.deepEqual(Array.from(p.errors),[]);
+  const log=p.changes.find(c=>c.sheet==='log ลงทะเบียนตัวละคร');assert.equal(log.fields['From Slot'],'SUB 1');assert.equal(log.fields['Affects Usage'],true);
+  assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===3).fields['Character Faceclaim'],'Sub Face');
+  assert.deepEqual(Array.from(p.changes.filter(c=>c.sheet==='log เฟซเคลมล็อก'),c=>c.fields.Type),['เริ่มนับต่อ']);
+});
+test('retiring unlocked old MAIN preserves its ID/URL, clears face, and adds dash validation to that cell only',()=>{
+  const f=fixture(),p=f.plan('main',{mainMode:'new',keepMain:false});assert.deepEqual(Array.from(p.errors),[]);
+  const old=p.changes.find(c=>c.sheet==='Characters'&&c.row===2);assert.equal(old.fields['Character Slot'],'-');assert.equal(old.fields['Character Faceclaim'],'');assert.equal(old.fields['Character Url'],undefined);assert.equal(old.fields.CharID,undefined);
+  assert.equal(p.changes.filter(c=>c.sheet==='log ลงทะเบียนตัวละคร').length,1);
+  const b=f.context.buildRegistrationBatch_(p,f.snapshot),rules=b.requests.filter(r=>r.setDataValidation);assert.equal(rules.length,1);
+  assert.equal(rules[0].setDataValidation.range.startRowIndex,1);assert.equal(rules[0].setDataValidation.range.startColumnIndex,3);assert.equal(rules[0].setDataValidation.rule.strict,true);
+  assert.equal(rules[0].setDataValidation.rule.condition.values.at(-1).userEnteredValue,'-');
+  delete p.characterSlotOptions;assert.throws(()=>f.context.buildRegistrationBatch_(p,f.snapshot),/native/);
+  const g=fixture();g.event('C-42-01','Main Face','พักนับ','');assert.ok(g.plan('main',{mainMode:'new',keepMain:false}).errors.some(e=>e.includes('ยังมีสิทธิ์ล็อก')));
+});
+test('full supported slots require explicit replacement; reject locked replacement, preserve unselected subs, merge when outgoing is replaced',()=>{
+  const f=fixture(),chars=f.table('Characters');for(const [id,slot]of [['C-42-03','SUB 2'],['C-42-04','SUB 3']]){chars.values.push([42,id,id,slot,'','https://roleplayth.com/old',false]);chars.formulas.push(chars.formulas[1].slice());}
+  assert.ok(f.plan('main',{mainMode:'new',keepMain:true}).errors.length);
+  const p=f.plan('main',{mainMode:'new',keepMain:true,replaceId:'C-42-02'});assert.deepEqual(Array.from(p.errors),[]);assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===3).fields['Character Slot'],'-');assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===2).fields['Character Slot'],'SUB 1');
+  assert.ok(!p.changes.some(c=>c.sheet==='Characters'&&[5,6].includes(c.row)));f.context.buildRegistrationBatch_(p,f.snapshot);
+  f.event('C-42-02','Reserved Sub Face','กำลังนับ');assert.ok(f.plan('main',{mainMode:'new',keepMain:true,replaceId:'C-42-02'}).errors.some(e=>e.includes('ยังมีสิทธิ์ล็อก')));
+  const g=fixture();const t=g.table('Characters');for(const [id,slot]of [['C-42-03','SUB 2'],['C-42-04','SUB 3']]){t.values.push([42,id,id,slot,'','',false]);t.formulas.push(t.formulas[1].slice());}t.values[1][6]=false;t.values[2][6]=true;t.values[2][4]='Sub Face';g.table('Player').values[1][4]='SUB 1';
+  const q=g.plan('main',{mainMode:'new',keepMain:true,replaceId:'C-42-02',faceclaim:'Brand New'});assert.deepEqual(Array.from(q.errors),[]);assert.equal(q.changes.filter(c=>c.sheet==='Characters'&&c.row===3).length,1);assert.equal(q.changes.find(c=>c.sheet==='Characters'&&c.row===3).fields['Character Slot'],'-');g.context.buildRegistrationBatch_(q,g.snapshot);
 });

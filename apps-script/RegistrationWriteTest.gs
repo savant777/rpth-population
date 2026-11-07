@@ -15,7 +15,7 @@ function prepareRegistrationWriteTest(input, operator, action) {
   var plan = action === 'register' ? previewNewPlayerInCopy(input) : previewRegistryAction_(input, action);
   if (plan.errors.length) return plan;
   var book = adminTestBook_();
-  var snapshot = registrationSnapshot_(book, action === 'sub' || action === 'switch');
+  var snapshot = registrationSnapshot_(book, ['sub', 'switch', 'main'].indexOf(action) >= 0);
   if (!adminTestOwner_()) throw new Error('ไม่พบผู้ใช้ Google สำหรับผูกคำขอ กรุณาเปิดชีตด้วยบัญชีของคุณ');
   var requestId = Utilities.getUuid(), token = Utilities.getUuid();
   var state = { requestId: requestId, token: token, input: input, operator: operator,
@@ -51,7 +51,7 @@ function commitRegistrationWriteTest(request) {
     assertTestOperator_(state.operator);
     var plan = !state.action || state.action === 'register' ? previewNewPlayerInCopy(state.input) : previewRegistryAction_(state.input, state.action);
     if (plan.errors.length) throw new Error(plan.errors.join('\n'));
-    var snapshot = registrationSnapshot_(book, state.action === 'sub' || state.action === 'switch');
+    var snapshot = registrationSnapshot_(book, ['sub', 'switch', 'main'].indexOf(state.action) >= 0);
     if (registrationDigest_(snapshot) !== state.fingerprint || JSON.stringify(plan.changes) !== JSON.stringify(state.plan.changes)) throw new Error('ข้อมูลเปลี่ยนหลังเปิดสรุป กรุณาตรวจสอบและสรุปใหม่');
     var result = buildRegistrationBatch_(plan, snapshot);
     receipt = { mode: 'TEST_COPY_COMMITTED', requestId: request.requestId, owner: state.owner,
@@ -79,7 +79,7 @@ function assertTestOperator_(operator) {
   if (operator !== 'Admin') throw new Error('บัญชีต้องเป็น Admin');
 }
 function registrationVerifiedReceipt_(book, receipt) {
-  if (receipt.action === 'sub' || receipt.action === 'switch') return verifyCharacterSwitchReceipt_(book, receipt);
+  if (['sub', 'switch', 'main'].indexOf(receipt.action) >= 0) return verifyCharacterSwitchReceipt_(book, receipt);
   var result = JSON.parse(JSON.stringify(receipt));
   try {
     var widths = { Users: 'D', Characters: 'G', Player: 'W', NPC: 'E', 'log ลงทะเบียนตัวละคร': 'M' };
@@ -131,7 +131,7 @@ function registrationSnapshot_(book, includeLocks) {
 }
 
 function buildRegistrationBatch_(plan, snapshot) {
-  if (plan.action === 'sub' || plan.action === 'switch') return buildCharacterSwitchBatch_(plan, snapshot);
+  if (['sub', 'switch', 'main'].indexOf(plan.action) >= 0) return buildCharacterSwitchBatch_(plan, snapshot);
   var kind = plan.action || 'register', counts = { register: [4], edit: [2, 4], npc: [1], race: [2] };
   if (plan.errors.length || !counts[kind] || counts[kind].indexOf(plan.changes.length) < 0) throw new Error('แผนบันทึกไม่ครบ 4 ชีตหรือไม่ถูกต้อง');
   var requests = [], rows = {};
