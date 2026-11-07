@@ -1,10 +1,28 @@
 # ส่งมอบงานให้ Codex อีกเครื่อง
 
+## 8 พฤศจิกายน — v14 ผ่านออนไลน์ พร้อมตรวจฟอร์ม MAIN
+
+Apps Script v14 ขึ้น URL เดิมแล้ว Render ยัง855d778 (ไม่มี Node เปลี่ยนจึงไม่ restart) ทดสอบหลังผู้ดูแล login ใหม่สำเร็จ: post99061164/request52cfae3f-3739-4776-82da-a2c6de062bf2 คืนใช้ID01 SUB3 log1189/event33พักนับ, post99061165/request01e4d150-4f9c-4e13-a1d6-7210853e9f03 promoteID01กลับMAIN เก็บID07เป็นSUB3 log1190/1191 ไม่มีeventล็อกซ้ำ ทั้งสองใบรับ verification.ok=true ทุกแถว/สูตรผ่าน
+
+Native inspector ยืนยัน Users357/Player296 ชื่อRPTH QA 20261106 A/MAIN/active, usage3/0, feeCount7/Fee5000, Exempt06/02/2027 คงเดิม Characters406 ID01 MAINtruefaceเดิม;407 ID02 SUB1falselockedface;410 ID05 SUB2falseblank;412 ID07 SUB3falseblank;408/409/411 retired '-' falseblank ทุกURL/IDคงอยู่ ล็อกID01พัก365วัน Start08/11/2026 PreviousEnd08/11/2027, ID02กำลังนับ364ถึง07/11/2027 event33ท้ายสุด NativeCheckOK/Publicตรง ไม่มีแก้สมาชิกจริง
+
+แท็บซ่อน _RPTH Receipts 0001 มี29ใบรับ (27ย้ายเดิม+2ใหม่), legacyReceiptCount0 ยืนยันhiddenและUUIDสองรายการตรง ใบรับเต็มยังอยู่ ห้ามrollbackไปreadermetadata-only. หลักฐานlocal-delivery/face-transfer-return-receipt.txt, face-transfer-restore-main-receipt.txt, face-transfer-final-native.txt และface-transfer-restore-main-success.jpg ล้างdraftmain/switch เปิดMAINว่างพร้อมให้ตรวจแล้ว tests94/94 (tracked79+local15) ผ่านนอกsandboxเพราะHTTP localhostต้องใช้สิทธิ์ build43functions/9sourcesผ่าน
+
+ถัดไปให้ผู้ดูแลตรวจฟอร์มMAIN แล้วทำฟอร์มซื้อ/ต่ออายุล็อกและเชื่อมeditเมจมีล็อก ตามด้วยreclaim/inactive ยังไม่ครบทั้งระบบ UI backlog11ข้อเก็บท้ายสุด ใช้สำเนาเดิมเท่านั้น ประวัติระหว่างแก้ด้านล่างเป็นสถานะในอดีตที่ปิดแล้ว
+
+## 8 พฤศจิกายน — ประวัติแก้พื้นที่ใบรับเต็ม (แก้และตรวจแล้ว)
+
+พบจริงตอนคืนQAโพสต์99061164: APIbatchUpdateปฏิเสธ createDeveloperMetadata เพราะstorageเต็ม ไม่มีใบรับsuccessของรายการนี้ อย่าอ้างว่าคืนQAแล้ว ปิดสรุปที่หมดอายุและpreviewใหม่หลังdeploy. เพิ่ม ReceiptStore.gs ใช้แท็บซ่อน _RPTH Receipts 0001 เก็บfullJSON/owner+marker'r'ต่อแถว และunique metadataIdเดิมสำหรับatomic idempotency ไม่เพิ่มDB ไม่ลบประวัติ มีlegacyfallback ห้ามrollbackไปreaderเก่าที่อ่านmetadataอย่างเดียวหลังย้าย
+
+ย้ายใบรับเก่า27ใบสำเร็จ8พ.ย.02:12ด้วยmigrateRegistrationReceiptsInCopy ในeditorสำเนา guard+ScriptLock+batchatomic เปรียบเทียบทุกpayloadครบ verifiedtrue/businessRowsChangedfalse. รายละเอียด docs/receipt-ledger.md หลักฐานlocal-delivery/receipt-migration-*; ไม่เปลี่ยนชีตธุรกิจ. โค้ดlocal94/94 (tracked79+local15), builder43functions/9sources; เพิ่มtestmigration/marker collision/lost response/cache eviction/owner mismatch/sharding/surrogate chunks. กำลังdeployเวอร์ชันใหม่ที่URLเดิม ไม่restartRender/ไม่หมุนsecret
+
+แก้เพิ่ม MAINเก่าที่มีล็อกคนละเมจกับFaceปัจจุบัน: คงเมจเฉพาะสิทธิ์ที่ตรงUID+CharID+face แทนมีlockใดก็เก็บเมจ (เพื่อรับประกันเมจที่ไม่ได้ล็อกถูกclearจริงเมื่อใช้กับMAINใหม่) testเพิ่มผ่าน. MAINเมจเดิมผ่านออนไลน์v13แล้ว request5a3b85cb-4701-4a8a-8735-f423bd1ef361 Characters411retire06/412new07/406MAINเก่า→SUB3, log1187/1188, verificationtrue. Switchเมจเดิมผ่าน request1af4e643-15a7-4710-97d9-5183b5e64473 log1186. NativeยืนยันเมจBอยู่เฉพาะnewMAIN07
+
 ## 8 พฤศจิกายน — กติกาใช้เฟซเคลมเดิม ยืนยันแล้ว
 
 ผู้ดูแลตอบอนุญาต: สลับไปอีกตัว/เพิ่มตัวรอง/สร้าง MAIN ใหม่ ใช้เมจเดียวกับตัวปัจจุบันได้ ถ้าเมจนั้นไม่มีสิทธิ์ล็อกและล้างเมจต้นทางใน atomic batch เดียวกัน แก้ CharacterSwitch.gs ให้ยกเว้น duplicate เฉพาะแถวcurrentที่กำลังclear ไม่ยกเว้นผู้ใช้อื่น/NPC/สิทธิ์ล็อกของตัวอื่น ไม่โอนล็อก Tests87/87 (tracked72+local15) build36functionsผ่าน รวม switch/sub/newMAIN keep/retire และ locked/other-owner/NPC reject
 
-**ยังไม่ deploy กติกานี้:** รอบ8พ.ย.เครื่องมือ CUA เห็นเฉพาะ IAB/MCP Apps ไม่มี Chrome extension จึงยังเข้า AppsScript/Admin ที่ผู้ดูแลloginไว้ไม่ได้ ขอผู้ดูแลเชื่อมChromeแล้ว (คำถามasyncChromeพร้อม) ออนไลน์ยังv12/source855d778 ต้องวางbundleใหม่และอัปเดต deployment URLเดิม ไม่ต้องrestartRenderเพราะแก้gs-only และไม่เปลี่ยนsecret อย่าอ้างว่าเมจเดิมผ่านGoogleออนไลน์แล้ว
+Source c6c3e75 pushแล้ว Chromeกลับมาเชื่อมต่อ ผู้ดูแลตอบChromeพร้อม; วางbundleตรวจclipboardตรงกันและdeploy AppsScript v13 วันที่8พ.ย.01:49ที่URLเดิมสำเร็จ ไม่restartRender ไม่แก้secret/manifest สำรองlocal-delivery/Code-before-face-transfer-20261108.gs. หน้าadminไม่มีsessionแล้ว ผู้ดูแลloginใหม่และตอบAdminพร้อม กำลังทดสอบเมจเดิมบนQA อย่าอ้างว่าผ่านGoogleออนไลน์ก่อนมีใบรับ
 
 ## 7 พฤศจิกายน — ฟอร์มเปลี่ยน MAIN ผ่านออนไลน์แล้ว
 

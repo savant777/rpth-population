@@ -3,6 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 function fixture(){
   const c=vm.createContext({});
+  require('./helpers/stub-receipt-storage.cjs')(c);
   for(const file of ['RegistrationPreview.gs','CharacterEdit.gs','OtherRegistryForms.gs','RegistrationWriteTest.gs'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../apps-script',file),'utf8'),c);
   const defs=[
     ['Users',['UserID','Username','UserType','Status'],[[42,'Main','Player','Active']]],

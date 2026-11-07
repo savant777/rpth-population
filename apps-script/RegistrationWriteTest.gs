@@ -59,14 +59,7 @@ function commitRegistrationWriteTest(request) {
       uid: plan.uid || plan.changes[0].fields.UserID, charId: plan.charId || (plan.changes[1] && plan.changes[1].fields.CharID) || '',
       action: state.action || 'register', rows: result.rows, note: 'บันทึกครบ ' + Object.keys(result.rows).length + ' ชีตในสำเนาทดสอบแล้ว' };
     if (result.expected) receipt.expected = result.expected;
-    result.requests.push({ createDeveloperMetadata: { developerMetadata: {
-      // Stable unique-ID constraint makes a duplicate batch fail atomically,
-      // including when the earlier response was lost. An unrelated ID collision
-      // fails closed; prepare a fresh preview rather than changing this request.
-      metadataId: (parseInt(request.requestId.replace(/-/g, '').slice(0, 8), 16) & 0x7fffffff) || 1,
-      metadataKey: 'rpth_reg_' + request.requestId, metadataValue: JSON.stringify(receipt),
-      visibility: 'DOCUMENT', location: { spreadsheet: true }
-    } } });
+    Array.prototype.push.apply(result.requests, registrationReceiptRequests_(book, receipt));
     if (typeof Sheets === 'undefined') throw new Error('ยังไม่ได้เพิ่มบริการ Google Sheets API');
     // All four rows, formulas and the durable receipt succeed or fail together.
     // If the response is lost, retry the SAME request; its receipt prevents duplication.
@@ -108,6 +101,8 @@ function registrationVerifiedReceipt_(book, receipt) {
   return result;
 }
 function findRegistrationReceipt_(book, requestId) {
+  var stored = receiptLedgerFind_(book, requestId);
+  if (stored) return stored;
   var items = book.getDeveloperMetadata().filter(function (item) { return item.getKey() === 'rpth_reg_' + requestId; });
   if (items.length > 1) throw new Error('พบ receipt ซ้ำ กรุณาตรวจสอบก่อนบันทึก');
   return items.length ? JSON.parse(items[0].getValue()) : null;

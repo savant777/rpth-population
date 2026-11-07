@@ -7,6 +7,7 @@ const crypto = require('node:crypto');
 
 function fixture() {
   const context = vm.createContext({});
+  require('./helpers/stub-receipt-storage.cjs')(context);
   for (const file of ['RegistrationPreview.gs', 'CharacterEdit.gs', 'RegistrationWriteTest.gs']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps-script', file), 'utf8'), context);
   const definitions = [
     ['Users', ['UserID', 'Username', 'UserType', 'Status'], [[42, 'Main Name', 'Player', 'Active']], [3]],

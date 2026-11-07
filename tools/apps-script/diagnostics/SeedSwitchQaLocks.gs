@@ -45,4 +45,8 @@ function inspectSwitchQaResults() {
     });
     console.log(JSON.stringify(result));
   });
+  console.log(JSON.stringify({receiptLedgers:book.getSheets().filter(function(s){return /^_RPTH Receipts [0-9]{4}$/.test(s.getName());}).map(function(s){
+    var end=s.getLastRow(),start=Math.max(2,end-2);
+    return {name:s.getName(),hidden:s.isSheetHidden(),count:Math.max(0,end-1),lastRequestIds:end<2?[]:s.getRange(start,1,end-start+1,1).getDisplayValues().map(function(r){return r[0];})};
+  }),legacyReceiptCount:book.getDeveloperMetadata().filter(function(m){return /^rpth_reg_/.test(m.getKey());}).length}));
 }

@@ -148,7 +148,7 @@ function planCharacterSwitch_(input, action, snapshot, slots, today) {
       editChar(c, { 'Character Slot': '-', 'Is Active Character': false, 'Character Faceclaim': '' });
       warnings.push('นำออกจากทะเบียนปัจจุบัน: ' + c['Character Name'] + ' (' + c.CharID + ') เก็บประวัติและลิงก์เดิม');
     });
-    if (input.keepMain) editChar(oldMain, { 'Character Slot': oldMainSlot, 'Is Active Character': false, 'Character Faceclaim': hasAnyLock(oldMain) ? String(oldMain['Character Faceclaim'] || '') : '' });
+    if (input.keepMain) editChar(oldMain, { 'Character Slot': oldMainSlot, 'Is Active Character': false, 'Character Faceclaim': liveLocks.some(function (r) { return own(r, oldMain, oldMain['Character Faceclaim']); }) ? String(oldMain['Character Faceclaim'] || '') : '' });
     changes.push({ sheet: 'Users', row: users[0].row, fields: { Username: String(target['Character Name']) } });
     changes.push({ sheet: 'Player', row: players[0].row, fields: { 'Display Name': String(target['Character Name']), 'Active Character': 'MAIN' } });
     warnings.push('ค่าธรรมเนียมและจำนวนครั้งให้สูตร Player คำนวณจาก log ตามเดิม');

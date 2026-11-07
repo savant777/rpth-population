@@ -8,6 +8,7 @@ const previewSource = fs.readFileSync(path.join(__dirname, '../apps-script/Regis
 const writerSource = fs.readFileSync(path.join(__dirname, '../apps-script/RegistrationWriteTest.gs'), 'utf8');
 function fixture() {
   const context = vm.createContext({});
+  require('./helpers/stub-receipt-storage.cjs')(context);
   vm.runInContext(previewSource, context);
   vm.runInContext(writerSource, context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps-script/WebGateway.gs'), 'utf8'), context);

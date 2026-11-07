@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 function fixture() {
   const context = vm.createContext({});
+  require('./helpers/stub-receipt-storage.cjs')(context);
   for (const file of ['RegistrationPreview.gs','CharacterSwitch.gs','CharacterSwitchWrite.gs','RegistrationWriteTest.gs']) vm.runInContext(fs.readFileSync(path.join(__dirname,'../apps-script',file),'utf8'),context);
   const defs = [
     ['Users',['UserID','Username','UserType','Status'],[[42,'Main','Player','Active']],[]],
@@ -125,6 +126,13 @@ test('unlocked current face transfers only with source clearing in the same swit
   }
   const f=fixture();f.table('Characters').values.push([99,'C-99-01','Other','MAIN','Main Face','',false]);f.table('Characters').formulas.push(f.table('Characters').formulas[1].slice());assert.ok(f.plan('switch',{faceclaim:'Main Face'}).errors.length);
   const g=fixture();g.table('NPC').values.push(['b','Other NPC','Main Face']);g.table('NPC').formulas.push(['','','']);assert.ok(g.plan('main',{mainMode:'new',keepMain:true,faceclaim:'Main Face'}).errors.length);
+});
+test('keeping old MAIN retains only its matching locked face, never an unlocked face merely because another face is reserved',()=>{
+  const f=fixture();f.event('C-42-01','Other Reserved Face','กำลังนับ');
+  const p=f.plan('main',{mainMode:'new',keepMain:true,faceclaim:'Main Face'});assert.deepEqual(Array.from(p.errors),[]);
+  assert.equal(p.changes.find(c=>c.sheet==='Characters'&&c.row===2).fields['Character Faceclaim'],'');
+  assert.equal(p.changes.find(c=>c.sheet==='Characters'&&!c.row).fields['Character Faceclaim'],'Main Face');
+  assert.ok(!p.changes.some(c=>c.sheet==='log เฟซเคลมล็อก'));f.context.buildRegistrationBatch_(p,f.snapshot);
 });
 test('promotion applies only to current SUB, retains ID/link/face and moves old MAIN into the freed slot without restarting paused lock',()=>{
   const f=fixture();f.table('Characters').values[1][6]=false;f.table('Characters').values[1][4]='';f.table('Characters').values[2][6]=true;f.table('Characters').values[2][4]='Sub Face';f.table('Player').values[1][4]='SUB 1';f.event('C-42-02','Sub Face','พักนับ','');

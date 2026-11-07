@@ -10,12 +10,28 @@
 | 2 | เปลี่ยนชื่อ/เฟซเคลม | deploy/ทดสอบออนไลน์กรณีปกติแล้ว พร้อมให้ตรวจ; การเชื่อมล็อกยังรอขั้น6 |
 | 3 | เพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ | deploy และทดสอบออนไลน์แล้ว พร้อมให้ผู้ดูแลตรวจบนสำเนา |
 | 4 | เพิ่มตัวรอง / สลับตัวละคร | deployและทดสอบออนไลน์แล้ว พร้อมให้ตรวจบนสำเนา; local81/81, Apps Script v11/Render40b0b0f |
-| 5 | เปลี่ยน MAIN | v12/Render855d778 ผ่านออนไลน์ new/promote/keep/retire/replacement; กติกาเมจเดิมยืนยันแล้ว local87/87 แต่ยังรอdeploygsเมื่อChromeเชื่อมกลับ |
+| 5 | เปลี่ยน MAIN | ผ่านออนไลน์ new/promote/keep/retire/replacement และเมจเดิมไม่มีล็อก; Apps Script v14/Render855d778 พร้อมตรวจบนสำเนา |
 | 6 | ล็อก/ต่ออายุ/พักนับ/นับต่อ | อ่าน native L:Q ครบแล้ว; auto pause/resume เชื่อมกับ switch แล้ว ยังต้องทำฟอร์มซื้อ/ต่ออายุและทดสอบออนไลน์ |
 | 7 | Reclaim ผ่าน/ไม่ผ่าน | มี demo model; ยังไม่มี live server flow |
 | 8 | Inactive หลายคน | มี demo model; flags/ยกเลิกล็อกยืนยันแล้ว ต้องพัฒนา server |
 
 กติกาทั้งหกข้อได้รับคำตอบแล้วในแชต 6 พ.ย. และแก้ admin-flow.md ตามนั้น คำว่า “ค้าง” ในตารางหมายถึงการพัฒนา/ทดสอบที่ยังไม่เสร็จ ไม่ต้องถามผู้ดูแลซ้ำเรื่อง flags, โควตาพิเศษ, ลิงก์ MAIN, ต่อหลังหมดอายุ และการยกเลิกจากเปลี่ยนเมจที่พักนับ
+
+## เมจเดิมและใบรับ — 8 พฤศจิกายน
+
+Apps Script v13 ทดสอบอนุญาตเมจต้นทางที่ไม่มีล็อกเมื่อclearในbatchเดียวกัน ใช้QA99061101เท่านั้น ไม่โอนสิทธิ์ล็อก ข้อห้ามเจ้าของอื่น/NPC/ล็อกยังมีlocalnegative tests
+
+| กรณีออนไลน์ | requestId | ผลจริง |
+| --- | --- | --- |
+| เตรียมใช้ SUB2 | 00b76dd2-6cc2-45a9-9da4-d42a74e17070 | log1185/event32 resumeID01 |
+| SUB2→SUB3 เมจเดียวกัน | 1af4e643-15a7-4710-97d9-5183b5e64473 | log1186; ID05clear/ID06activefaceB |
+| สร้าง MAIN ใหม่เมจเดียวกัน แทนที่ตัวรองเต็ม | 5a3b85cb-4701-4a8a-8735-f423bd1ef361 | log1187/1188; ID06retiredblank, newID07MAINfaceB/URLใหม่; ID01→SUB3คงlockedface |
+| คืนใช้ ID01 หลังแก้ใบรับ v14 | 52cfae3f-3739-4776-82da-a2c6de062bf2 | log1189/event33pause; ID07clearface |
+| เลื่อน ID01 กลับ MAIN เก็บ ID07 SUB3 | 01e4d150-4f9c-4e13-a1d6-7210853e9f03 | log1190/1191; Users/Playersync; ไม่มีlockeventซ้ำ |
+
+ทุกใบรับ verification.ok=true Nativeสุดท้าย MAIN ID01active, SUB1 ID02lockedface, SUB2 ID05blank, SUB3 ID07blank; retired03/04/06 '-', URL/IDคงเดิม Playerusage3/0 fee7/5000 exempt06/02/2027 ล็อกID01พัก365วันStart08/11/2026 PreviousEnd08/11/2027, ID02นับ364ถึง07/11/2027; PublicและnativeCheckOK
+
+ความล้มเหลวที่พบจริง: post99061164ครั้งแรกถูกbatchUpdateปฏิเสธเพราะmetadataเต็ม ไม่มีpartialbusinesswrite แก้ด้วยReceiptStore.gsและย้ายใบรับ27ใบแบบatomic/readbackตรงกัน ไม่ลบประวัติ จากนั้นv14บันทึกสองรายการด้านบนสำเร็จ nativeledgerhidden29ใบ/legacy0 รายละเอียดreceipt-ledger.md ห้ามrollbackreaderเก่า Local94/94 (tracked79+local15) build43functions/9sources หลักฐานlocal-delivery/face-transfer-*.txt/jpg ล้างdraftแล้วพร้อมผู้ดูแลตรวจ
 
 ## เพิ่มตัวรอง / สลับใช้งาน — 7 พฤศจิกายน
 
