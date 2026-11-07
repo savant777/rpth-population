@@ -53,6 +53,12 @@ test('lock matching cannot inherit rights by face/name/slot alone; expired lock 
   r[3]='C-42-01';r[4]=99;assert.equal(f.plan().changes[0].fields['Character Faceclaim'],'');
   r[4]=42;r[12]='กำลังนับ';r[14]='2026-11-06';assert.equal(f.plan().changes[0].fields['Character Faceclaim'],'');
 });
+test('blank face on native continuation retains original right; UID transfer across events is rejected',()=>{
+  const f=fixture();const start=f.event('C-42-01','Main Face','กำลังนับ'),log=f.table('log เฟซเคลมล็อก'),pause=start.slice();
+  pause[0]='E-pause';pause[6]='';pause[7]='พักนับ';pause[12]='พักนับ';pause[14]='';log.values.push(pause);log.formulas.push(log.formulas[1].slice());
+  assert.equal(f.plan().changes[0].fields['Character Faceclaim'],'Main Face');assert.equal(f.plan().changes.at(-1).fields.Type,'เริ่มนับต่อ');
+  assert.equal(log.values.at(-1)[6],'');pause[4]=99;assert.ok(f.plan().errors.some(e=>e.includes('เจ้าของ')));
+});
 test('reject current/foreign/retired target, invalid active source, conflicts, duplicate post and out of order dates',()=>{
   for(const values of [{charId:'C-42-01'},{charId:'C-42-09'},{charId:'C-99-01'},{faceclaim:'NPC Face'},{faceclaim:'Main Face'},{date:'31/02/2026'},{date:'08/11/2026'},{post:'1'}])assert.ok(fixture().plan('switch',values).errors.length);
   const f=fixture();f.table('Player').values[1][4]='SUB 1';assert.ok(f.plan().errors.length);
@@ -77,4 +83,22 @@ test('readback checks every changed character and both lock rows; mismatch or na
   let bad=false;f.context.Sheets={Spreadsheets:{Values:{batchGet:(_id,opts)=>({valueRanges:batch.expected.map(e=>{const raw=[];Object.entries(e.fields).forEach(([c,v])=>raw[c]=v);if(e.sheet==='log เฟซเคลมล็อก')raw[15]=bad?'ผิดพลาด':'OK';if(opts.valueRenderOption==='FORMULA')e.formulas.forEach(c=>raw[c]='=native');return {values:[raw]};})})}}};
   assert.equal(f.context.verifyCharacterSwitchReceipt_({getId:()=> 'copy'},receipt).verification.ok,true);
   bad=true;assert.equal(f.context.verifyCharacterSwitchReceipt_({getId:()=> 'copy'},receipt).verification.ok,false);
+});
+test('switch shared commit includes lock snapshot freshness and durable retry after a lost response',()=>{
+  const crypto=require('node:crypto'), f=fixture(), cache=new Map(), receipts=new Map();let batches=0,lose=false;
+  const book={getId:()=> 'copy',getDeveloperMetadata:()=>[...receipts].map(([key,value])=>({getKey:()=>key,getValue:()=>value}))};
+  Object.assign(f.context,{
+    adminTestBook_:()=>book,adminTestOwner_:()=> 'session',adminTestLock_:()=>({tryLock:()=>true,releaseLock(){}}),
+    inspectCopyStructure_:()=>({}),CacheService:{getUserCache:()=>({put:(k,v)=>cache.set(k,v),get:k=>cache.get(k)})},
+    Utilities:{getUuid:()=>crypto.randomUUID()},registrationDigest_:s=>crypto.createHash('sha256').update(JSON.stringify(s)).digest('hex'),
+    registrationSnapshot_:(_book,includeLocks)=>{assert.equal(includeLocks,true);return f.snapshot;},
+    previewRegistryAction_:()=>f.plan(),verifyCharacterSwitchReceipt_:(_book,receipt)=>receipt,
+    Sheets:{Spreadsheets:{batchUpdate:payload=>{batches++;const m=payload.requests.at(-1).createDeveloperMetadata.developerMetadata;receipts.set(m.metadataKey,m.metadataValue);if(lose){lose=false;throw Error('response lost');}}}}
+  });
+  const preview=f.context.prepareRegistrationWriteTest(f.input,'Admin','switch');
+  f.event('C-42-02','Sub Face','กำลังนับ');
+  assert.throws(()=>f.context.commitRegistrationWriteTest({requestId:preview.requestId,previewToken:preview.previewToken}),/ข้อมูลเปลี่ยน/);assert.equal(batches,0);
+  const fresh=f.context.prepareRegistrationWriteTest(f.input,'Admin','switch'),request={requestId:fresh.requestId,previewToken:fresh.previewToken};lose=true;
+  assert.throws(()=>f.context.commitRegistrationWriteTest(request),/response lost/);assert.equal(batches,1);cache.clear();
+  const receipt=f.context.commitRegistrationWriteTest(request);assert.equal(batches,1);assert.equal(receipt.expected.length,5);assert.equal(receipt.requestId,request.requestId);
 });

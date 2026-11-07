@@ -9,13 +9,35 @@
 | 1 | ลงทะเบียนผู้เล่นใหม่ | ออนไลน์สำเร็จและกรณี validation บางส่วนแล้ว; robustness ยังไม่ครบ |
 | 2 | เปลี่ยนชื่อ/เฟซเคลม | deploy/ทดสอบออนไลน์กรณีปกติแล้ว พร้อมให้ตรวจ; การเชื่อมล็อกยังรอขั้น6 |
 | 3 | เพิ่ม NPC / เปลี่ยนเผ่าพันธุ์ | deploy และทดสอบออนไลน์แล้ว พร้อมให้ผู้ดูแลตรวจบนสำเนา |
-| 4 | เพิ่มตัวรอง / สลับตัวละคร | มี demo model; ต้องพัฒนา server และเชื่อมเหตุการณ์ล็อก |
+| 4 | เพิ่มตัวรอง / สลับตัวละคร | deployและทดสอบออนไลน์แล้ว พร้อมให้ตรวจบนสำเนา; local81/81, Apps Script v11/Render40b0b0f |
 | 5 | เปลี่ยน MAIN | มี demo model; กติกาลิงก์/สิทธิ์พิเศษยืนยันแล้ว ต้องพัฒนา server |
-| 6 | ล็อก/ต่ออายุ/พักนับ/นับต่อ | มี demo model; พบ Type native แล้ว ต้องตรวจสูตรและพัฒนา server |
+| 6 | ล็อก/ต่ออายุ/พักนับ/นับต่อ | อ่าน native L:Q ครบแล้ว; auto pause/resume เชื่อมกับ switch แล้ว ยังต้องทำฟอร์มซื้อ/ต่ออายุและทดสอบออนไลน์ |
 | 7 | Reclaim ผ่าน/ไม่ผ่าน | มี demo model; ยังไม่มี live server flow |
 | 8 | Inactive หลายคน | มี demo model; flags/ยกเลิกล็อกยืนยันแล้ว ต้องพัฒนา server |
 
 กติกาทั้งหกข้อได้รับคำตอบแล้วในแชต 6 พ.ย. และแก้ admin-flow.md ตามนั้น คำว่า “ค้าง” ในตารางหมายถึงการพัฒนา/ทดสอบที่ยังไม่เสร็จ ไม่ต้องถามผู้ดูแลซ้ำเรื่อง flags, โควตาพิเศษ, ลิงก์ MAIN, ต่อหลังหมดอายุ และการยกเลิกจากเปลี่ยนเมจที่พักนับ
+
+## เพิ่มตัวรอง / สลับใช้งาน — 7 พฤศจิกายน
+
+Deployed source40b0b0f: Apps Script v10, Render Live26.4s, shared loginใหม่แล้ว ใช้บัญชีสังเคราะห์99061101เท่านั้น
+
+| กรณีออนไลน์ | requestId | ผลจริง |
+| --- | --- | --- |
+| MAIN→SUB1 ไม่มีล็อก | 0371f78d-a0a7-4d81-9201-e243fe7fc066 | Characters406/407 Player296 log1168; เมจ MAINว่าง, SUB1active; readbackผ่าน4แถว |
+| SUB1→MAIN มีล็อกทั้งคู่ | 05e5d937-9d64-4108-aa3f-968c53febeda | log1169 event24เริ่มนับต่อSUB1/25พักMAIN; เมจSUB1คงอยู่; readbackผ่าน6แถว |
+| สร้างตัวรองใหม่พร้อมสลับ | 217ae8b0-f707-4a21-93a8-09780d60289c | Characters408 C-99061101-03 SUB2 active URLใหม่, log1170 usageTRUE, event26เริ่มนับต่อMAIN; readbackผ่าน5แถว |
+| SUB2→SUB1 | 1c71afd8-8838-4fff-bd33-ea79c790adb0 | log1171 event27พักSUB1; ล้างเมจSUB2เพราะไม่มีล็อก; readbackผ่าน5แถว |
+| คืนSUB1→MAIN หลังdeployv11 | 3b26cac6-8f95-45c5-9b80-626e217a49a2 | log1172 event28resumeSUB1/29pauseMAIN; readbackผ่าน6แถว |
+
+สิทธิ์ล็อกเป็นfixtureที่สร้างแยกผ่าน SeedSwitchQaLocks.gs event21–23 ก่อนทดสอบสลับกลับ ทั้งสาม nativeCheckOK ไม่ใช่หลักฐานว่าฟอร์มซื้อ/ต่ออายุพร้อม Read-only inspectorอ่านแถวจริงหลังสลับกลับแล้ว: Characters URLคงเดิม, Player/PublicPlayer MAIN statusTRUE usage2/0 exempt06/02/2027, FaceclaimLocks12/13 และPublicLocks10/11ตรงกัน MAINพัก365วัน StartPause07/11/2026 PreviousEnd07/11/2027, SUB1นับถึง07/11/2027 ไม่มีerror สูตรทั้งหมด Nativeผล/ใบรับ/ภาพเก็บ local-delivery/*switch* และ sub-register-*.
+
+Local casesเพิ่ม9ข้อ: slot/ID allocationไม่ใช้ retired IDs, current active consistency, duplicate/foreign/retired target, face/NPC/lock conflict, duplicatepost, chronology, native zero-day pause rejection, prefilledL:Qไม่ชนinput, multi-row atomic batch/native formulas, readbackทุกแถว, stale lock snapshot และlost-response receipt retry รวมกับเดิม80testsผ่าน ยังไม่อ้างว่าทดสอบ lost-response/retry/concurrency บนGoogleจริงครบ
+
+อ่านแถวจริงหลังเพิ่มตัวรองด้วย inspectorแล้ว: Characters408 ID03/URL/TRUEตรง, Player/PublicPlayer SUB2 วันที่07/11/2026 usage1/1, locksทั้งสองกลับนับ365วันถึง07/11/2027; ไม่แก้ชื่อUsers/Playerหรือcheckflags อีกกรณีออนไลน์ new-sub ใช้เมจ MAIN ที่มีล็อกอยู่ถูกปฏิเสธทั้งผู้ใช้งานซ้ำ/สิทธิ์ล็อกตัวอื่น ไม่มีแถวเพิ่มจากคำขอนั้น
+
+เพิ่มอีก1testเรื่อง native log อนุญาต Gว่างในเหตุการณ์ต่อมา จึง resolveเฟซจากเริ่มล็อก และต้องคงUID/CharIDเดิมข้ามทุกเหตุการณ์ (native Checkเองยังไม่ตรวจUID) รวม81testsผ่าน builder36functions การแก้นี้เป็น gs-only ไม่ต้อง restartRender/session
+
+ผลfinal read-only inspectorหลังv11commit: Characters406 TRUE/407FALSEคงเมจ/408FALSEเมจว่าง ทั้งสามURLคงเดิม; PublicPlayer MAIN TRUE usage2/0 Exempt06/02/2027; PublicLocksMAINพัก365วัน Start07/11/2026 PreviousEnd07/11/2027, SUB1นับถึง07/11/2027 ไม่มีformulaerrors NativeCheckOKถึงevent29. ล้างdraftsub/switchแล้ว เปิดsubว่างพร้อมตรวจ ถัดไปฟอร์มMAIN
 
 ## รายการทดสอบร่วมทุกฟอร์ม
 

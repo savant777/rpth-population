@@ -8,6 +8,8 @@ Native formula columns L:Q: Previous Event Row, State After Event, Days After Ev
 
 Pause requires previous state counting and previous end strictly greater than the event date; resume requires paused. Event dates cannot precede the previous event. Check must evaluate to `OK`. EventID must be unique. Pause stores previous end minus pause date as remaining days; resume uses that saved number to compute a new end. Date values are native Sheets dates, not formatted strings.
 
+Native Check permits blank faceclaim G on subsequent events. Resolve it from the first event. Enforce immutable UID and CharID across the entire LockID history as well: the native Check compares CharID and face, but does not itself compare UserID.
+
 Faceclaim Locks A:K: LockID, UserID, CharID, Lock Character Name, Lock Face Claim, Status, Remaining Days, End Date, Admin Note, Start Pause, Previous End Date. A2 spills lock IDs. F2 spills F:H. J/K pause displays currently refer only to event rows through 5000, so the switch writer stops before exceeding that bound. Never write summary or Public sheets.
 
 Public Faceclaim Locks A:J: UserID, Lock Character Name, Lock Face Claim, End Date, CharID, LockID, Status, Remaining Days, Start Pause, Previous End Date. Native A1 QUERY selects B,D,E,H,C,A,F,G,J,K from the summary, including counting/paused only.

@@ -78,12 +78,20 @@ function planCharacterSwitch_(input, action, snapshot, slots, today) {
   var result = function () { return { action: action, uid: f.uid, charId: charId || '', errors: errors, warnings: warnings, changes: errors.length ? [] : changes, canCommit: false }; };
   if (errors.length) return result();
   var events = tables['log เฟซเคลมล็อก'].filter(function (r) { return String(r.LockID || '').trim(); });
-  var latest = {}, eventIds = {};
+  var latest = {}, eventIds = {}, owners = {};
   events.forEach(function (r) {
     if (!r.EventID || eventIds[String(r.EventID)]) errors.push('EventID ว่างหรือซ้ำ กรุณาตรวจ log ล็อก');
     eventIds[String(r.EventID)] = true;
     if (r.Check !== 'OK') errors.push('log ล็อกแถว ' + r.row + ' ยังไม่ผ่าน Check');
     if (!iso(r['Effective Date']) || ['กำลังนับ', 'พักนับ', 'ยกเลิก'].indexOf(r['State After Event']) < 0 || (r['State After Event'] === 'กำลังนับ' && !iso(r['End Date After Event']))) errors.push('วันที่หรือสถานะ log ล็อกไม่สมบูรณ์');
+    var owner = owners[String(r.LockID)];
+    if (!owner) owners[String(r.LockID)] = { uid: id(r.UserID), charId: r.CharID, face: String(r['Lock Face Claim'] || '') };
+    else {
+      if (id(r.UserID) !== owner.uid || r.CharID !== owner.charId || (r['Lock Face Claim'] && norm(r['Lock Face Claim']) !== norm(owner.face))) errors.push('เจ้าของหรือเฟซเคลมของสิทธิ์ล็อกเปลี่ยนข้ามเหตุการณ์');
+      // Native Check permits blank G on subsequent events. Resolve from start;
+      // never treat a blank continuation as missing protection.
+      if (!r['Lock Face Claim']) r['Lock Face Claim'] = owner.face;
+    }
     latest[String(r.LockID)] = r;
   });
   var liveLocks = Object.keys(latest).map(function (key) { return latest[key]; }).filter(function (r) {

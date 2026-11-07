@@ -1,12 +1,20 @@
 # ส่งมอบงานให้ Codex อีกเครื่อง
 
-## 7 พฤศจิกายน — เพิ่มตัวรอง/สลับใช้งาน (กำลังทดสอบ)
+## 7 พฤศจิกายน — เพิ่มตัวรอง/สลับใช้งาน พร้อมให้ตรวจบนสำเนา
 
 อ่าน native L:Q ครบแล้วด้วย InspectSwitchCopy.gs ที่เพิ่มเป็นไฟล์ diagnostic แยกใน Apps Script เดิม ไม่แก้ properties/manifest/ชีต รายละเอียด `docs/native-switch-schema.md` และรายงาน local ignored `local-delivery/switch-native-log.txt` พบ Player รองรับ SUB1–3 แต่ Characters ถึง SUB6 จึงใช้ intersection ไม่ขยาย validation เอง; pause ต้อง End > วันพักตาม native Check ไม่เดากติกา zero-day
 
 เพิ่ม CharacterSwitch.gs / CharacterSwitchWrite.gs: sub ใหม่สร้าง CharID ใหม่ไม่ใช้เลข retired, switch ใช้ตัวเดิมคง URL, ตรวจ current flag/Player slot, คงเมจ outgoing เฉพาะล็อกตรง UID+CharID+face, auto เริ่มนับต่อ/พักนับ แสดงใน preview และเขียนพร้อมกันผ่าน shared atomic transaction/receipt/stale guard บันทึก native L:Q และตรวจทุกแถวกลับ ไม่แตะ summary/Public; event append นับ input A:K ไม่ใช่สูตร prefill ห้ามเกิน5000เพราะสูตร pause display; ไม่รับ future switch หรือย้อนหลังข้าม usage/lock event ที่มีแล้ว ไม่เก็บ extra permission แยก
 
-Local tests79/79 (tracked64 + local15) builder36functions ผ่าน ยังต้อง deploy bundle/Render และทดสอบออนไลน์บน QA ก่อนถือว่าสองฟอร์มพร้อม ห้ามอ้าง local mocks เป็นหลักฐาน Google integration หรือเปิดให้ชีตหลัก
+Local tests81/81 (tracked66 + local15) builder36functions จาก8sources ผ่านทั้งชุด Render40b0b0f Live26.4s URLเดิม ผู้ดูแลloginใหม่แล้ว AppsScriptล่าสุดv11 เพิ่มรองรับเมจว่างในlogต่อมาโดยresolveจากเริ่มล็อก และตรวจUID/CharIDคงเดิมข้ามLockIDhistory ผ่านpositivecommitออนไลน์v11แล้ว ไม่ต้องrestartRenderสำหรับgs-only/sessionยังใช้อยู่ ไม่มีsecretใหม่
+
+ออนไลน์ MAIN→SUB1, SUB1→MAINพร้อมresume/pause, สร้างSUB2ใหม่ ID03+URL, SUB2→SUB1ล้างเมจไม่มีล็อก และคืนSUB1→MAINบนv11 สำเร็จทั้งหมด ใบรับreadbackผ่าน log1168–1172 event24–29 รายละเอียดrequestIdsในdocs/admin-test-matrix.md; เมจซ้ำกับล็อกตัวอื่นถูกปฏิเสธก่อนpreview ไม่เขียนแถวจากรายการนั้น
+
+Lock fixtureเฉพาะQA ผ่าน SeedSwitchQaLocks.gs (ไฟล์แยกในeditor ไม่ใช่ flowซื้อ): event21–23 L-99061101-QA01/QA02 CheckOK ห้ามรันseedซ้ำ guardปฏิเสธ ใช้inspectSwitchQaResultsอ่านผลได้ ฟังก์ชันinspectอ่านอย่างเดียวและเลือกเฉพาะUIDQA; หลังเปลี่ยนฟังก์ชันในeditorให้รอstateยืนยันก่อนกดRun (ครั้งหนึ่งUIยังใช้seedเดิม แต่guardปฏิเสธก่อนเขียน)
+
+สถานะสุดท้ายQA99061101: Characters406 MAINactive faceเดิม/407 SUB1inactiveคงเมจเพราะล็อก/408 SUB2inactiveเมจว่าง ID03 URLคงเดิม; Player296/PublicPlayer MAIN Active usage2/0 exempt06/02/2027; FaceclaimLocks12/13และPublicLocks10/11 MAINพัก365วันStart07/11/2026 PreviousEnd07/11/2027, SUB1นับถึง07/11/2027 NativeCheckOKครบ event29ท้ายสุด เก็บQAเป็นหลักฐาน ล้างdraftsub/switchแล้ว หน้าadminเปิดฟอร์มsubว่างให้ผู้ดูแลตรวจ รูป/รายงานlocal-delivery/switch-final-native-results.txt และsub-register-success.jpg
+
+ถัดไปเมื่อผู้ดูแลตรวจสองฟอร์มนี้: ทำเปลี่ยนMAINตามflowเดิม จากนั้นซื้อ/ต่ออายุล็อกและเชื่อมeditเมจเดิมที่ยังblock, reclaim, inactive ห้ามอ้างว่าพร้อมทั้งระบบ RobustnessGoogleจริงบางเคสยังค้างตามmatrix UI9รายการยังเก็บไว้ท้ายสุด อ่าน8sourcesในbuilder ไม่เพิ่มไฟล์sourceซ้ำในeditor (รหัส.gsยังเป็นbundleเดียว)
 
 อัปเดต 6 พฤศจิกายน 2026 (Asia/Bangkok) ผู้ดูแลพักแล้ว ให้ใช้เอกสารนี้ทำงานต่อโดยไม่ต้องให้ผู้ดูแลเล่าประวัติใหม่
 
