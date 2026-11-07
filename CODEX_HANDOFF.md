@@ -1,5 +1,13 @@
 # ส่งมอบงานให้ Codex อีกเครื่อง
 
+## 7 พฤศจิกายน — เพิ่มตัวรอง/สลับใช้งาน (กำลังทดสอบ)
+
+อ่าน native L:Q ครบแล้วด้วย InspectSwitchCopy.gs ที่เพิ่มเป็นไฟล์ diagnostic แยกใน Apps Script เดิม ไม่แก้ properties/manifest/ชีต รายละเอียด `docs/native-switch-schema.md` และรายงาน local ignored `local-delivery/switch-native-log.txt` พบ Player รองรับ SUB1–3 แต่ Characters ถึง SUB6 จึงใช้ intersection ไม่ขยาย validation เอง; pause ต้อง End > วันพักตาม native Check ไม่เดากติกา zero-day
+
+เพิ่ม CharacterSwitch.gs / CharacterSwitchWrite.gs: sub ใหม่สร้าง CharID ใหม่ไม่ใช้เลข retired, switch ใช้ตัวเดิมคง URL, ตรวจ current flag/Player slot, คงเมจ outgoing เฉพาะล็อกตรง UID+CharID+face, auto เริ่มนับต่อ/พักนับ แสดงใน preview และเขียนพร้อมกันผ่าน shared atomic transaction/receipt/stale guard บันทึก native L:Q และตรวจทุกแถวกลับ ไม่แตะ summary/Public; event append นับ input A:K ไม่ใช่สูตร prefill ห้ามเกิน5000เพราะสูตร pause display; ไม่รับ future switch หรือย้อนหลังข้าม usage/lock event ที่มีแล้ว ไม่เก็บ extra permission แยก
+
+Local tests79/79 (tracked64 + local15) builder36functions ผ่าน ยังต้อง deploy bundle/Render และทดสอบออนไลน์บน QA ก่อนถือว่าสองฟอร์มพร้อม ห้ามอ้าง local mocks เป็นหลักฐาน Google integration หรือเปิดให้ชีตหลัก
+
 อัปเดต 6 พฤศจิกายน 2026 (Asia/Bangkok) ผู้ดูแลพักแล้ว ให้ใช้เอกสารนี้ทำงานต่อโดยไม่ต้องให้ผู้ดูแลเล่าประวัติใหม่
 
 ## เริ่มที่นี่

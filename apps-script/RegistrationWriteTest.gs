@@ -15,7 +15,7 @@ function prepareRegistrationWriteTest(input, operator, action) {
   var plan = action === 'register' ? previewNewPlayerInCopy(input) : previewRegistryAction_(input, action);
   if (plan.errors.length) return plan;
   var book = adminTestBook_();
-  var snapshot = registrationSnapshot_(book);
+  var snapshot = registrationSnapshot_(book, action === 'sub' || action === 'switch');
   if (!adminTestOwner_()) throw new Error('ไม่พบผู้ใช้ Google สำหรับผูกคำขอ กรุณาเปิดชีตด้วยบัญชีของคุณ');
   var requestId = Utilities.getUuid(), token = Utilities.getUuid();
   var state = { requestId: requestId, token: token, input: input, operator: operator,
@@ -51,13 +51,14 @@ function commitRegistrationWriteTest(request) {
     assertTestOperator_(state.operator);
     var plan = !state.action || state.action === 'register' ? previewNewPlayerInCopy(state.input) : previewRegistryAction_(state.input, state.action);
     if (plan.errors.length) throw new Error(plan.errors.join('\n'));
-    var snapshot = registrationSnapshot_(book);
+    var snapshot = registrationSnapshot_(book, state.action === 'sub' || state.action === 'switch');
     if (registrationDigest_(snapshot) !== state.fingerprint || JSON.stringify(plan.changes) !== JSON.stringify(state.plan.changes)) throw new Error('ข้อมูลเปลี่ยนหลังเปิดสรุป กรุณาตรวจสอบและสรุปใหม่');
     var result = buildRegistrationBatch_(plan, snapshot);
     receipt = { mode: 'TEST_COPY_COMMITTED', requestId: request.requestId, owner: state.owner,
       operator: state.operator, committedAt: new Date().toISOString(),
       uid: plan.uid || plan.changes[0].fields.UserID, charId: plan.charId || (plan.changes[1] && plan.changes[1].fields.CharID) || '',
       action: state.action || 'register', rows: result.rows, note: 'บันทึกครบ ' + Object.keys(result.rows).length + ' ชีตในสำเนาทดสอบแล้ว' };
+    if (result.expected) receipt.expected = result.expected;
     result.requests.push({ createDeveloperMetadata: { developerMetadata: {
       // Stable unique-ID constraint makes a duplicate batch fail atomically,
       // including when the earlier response was lost. An unrelated ID collision
@@ -78,6 +79,7 @@ function assertTestOperator_(operator) {
   if (operator !== 'Admin') throw new Error('บัญชีต้องเป็น Admin');
 }
 function registrationVerifiedReceipt_(book, receipt) {
+  if (receipt.action === 'sub' || receipt.action === 'switch') return verifyCharacterSwitchReceipt_(book, receipt);
   var result = JSON.parse(JSON.stringify(receipt));
   try {
     var widths = { Users: 'D', Characters: 'G', Player: 'W', NPC: 'E', 'log ลงทะเบียนตัวละคร': 'M' };
@@ -113,8 +115,9 @@ function findRegistrationReceipt_(book, requestId) {
 function registrationDigest_(value) {
   return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify(value)));
 }
-function registrationSnapshot_(book) {
+function registrationSnapshot_(book, includeLocks) {
   var definitions = [['Users', 4], ['Characters', 7], ['Player', 23], ['log ลงทะเบียนตัวละคร', 13], ['Staff', 5], ['NPC', 5], ['Public Faceclaim Locks', 7]];
+  if (includeLocks) definitions.push(['log เฟซเคลมล็อก', 17]);
   return definitions.map(function (definition) {
     var sheet = book.getSheetByName(definition[0]);
     if (!sheet || sheet.getMaxColumns() < definition[1]) throw new Error('โครงสร้างเปลี่ยน: ' + definition[0]);
@@ -128,6 +131,7 @@ function registrationSnapshot_(book) {
 }
 
 function buildRegistrationBatch_(plan, snapshot) {
+  if (plan.action === 'sub' || plan.action === 'switch') return buildCharacterSwitchBatch_(plan, snapshot);
   var kind = plan.action || 'register', counts = { register: [4], edit: [2, 4], npc: [1], race: [2] };
   if (plan.errors.length || !counts[kind] || counts[kind].indexOf(plan.changes.length) < 0) throw new Error('แผนบันทึกไม่ครบ 4 ชีตหรือไม่ถูกต้อง');
   var requests = [], rows = {};
